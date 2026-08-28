@@ -34,6 +34,29 @@ python3 -m venv .venv
 The default browser opens `http://127.0.0.1:8000` automatically. If the
 operating system cannot open it, visit the same address manually.
 
+## Run from the command line
+
+Convert a DOCX file and choose the CSV output path:
+
+```bash
+.venv/bin/python cli.py input.docx output.csv
+```
+
+The output argument is optional. Without it, the CSV is created next to the
+input file using the same filename:
+
+```bash
+.venv/bin/python cli.py input.docx
+```
+
+For a custom WebP image quality between 1 and 100:
+
+```bash
+.venv/bin/python cli.py input.docx output.csv --image-quality 85
+```
+
+Use quoted paths when a filename or directory contains spaces.
+
 ## Run in production
 
 Use a WSGI server and adjust the worker count to match the host capacity:

@@ -9,3 +9,8 @@ dist/
 build/
 *.egg-info/
 
+# Local conversion inputs and outputs
+*.docx
+*.csv
+input/
+output/
