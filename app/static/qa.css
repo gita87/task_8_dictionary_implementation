@@ -1,0 +1,117 @@
+:root {
+  color: #222;
+  background: #f3f3f3;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; min-width: 320px; }
+
+.page {
+  width: min(960px, calc(100% - 32px));
+  margin: 40px auto;
+}
+
+.page-wide { width: min(1440px, calc(100% - 32px)); }
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.page-header.compact { align-items: center; }
+.eyebrow { margin: 0 0 8px; color: #666; font-size: 11px; font-weight: 700; letter-spacing: .12em; }
+h1 { margin: 0; font-size: 30px; }
+.filename { margin: 8px 0 0; color: #666; font-size: 14px; }
+
+.overall, .check-status {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 8px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.overall-passed, .check-pass { background: #e1f3e6; color: #1e6635; }
+.overall-passed-with-warnings, .check-warning { background: #fff0c9; color: #7b5700; }
+.overall-failed, .check-fail { background: #f8dddd; color: #8d2727; }
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.summary article, .panel, .table-panel {
+  border: 1px solid #d8d8d8;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.summary article { padding: 20px; }
+.summary strong { display: block; font-size: 23px; }
+.summary span { display: block; margin-top: 5px; color: #666; font-size: 12px; }
+
+.panel { margin-top: 16px; padding: 24px; }
+.panel h2 { margin: 0; font-size: 18px; }
+.panel-heading { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.panel-heading p { margin: 0; color: #666; font-size: 13px; }
+
+.check-list { border-top: 1px solid #e2e2e2; }
+.check { display: grid; grid-template-columns: 72px 1fr; gap: 16px; padding: 16px 0; border-bottom: 1px solid #e2e2e2; }
+.check:last-child { border-bottom: 0; padding-bottom: 0; }
+.check-status { align-self: start; padding: 6px 8px; text-align: center; }
+.check h3 { margin: 0; font-size: 14px; }
+.check p { margin: 5px 0 0; color: #666; font-size: 13px; line-height: 1.45; }
+
+.metadata dl { margin: 16px 0 0; }
+.metadata dl div { display: grid; grid-template-columns: 150px 1fr; gap: 16px; padding: 9px 0; border-top: 1px solid #e8e8e8; }
+.metadata dt { color: #666; font-size: 12px; }
+.metadata dd { margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+.hash { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+.primary, .secondary, .pagination a {
+  display: inline-block;
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 11px 15px;
+  color: #222;
+  font-size: 13px;
+  text-decoration: none;
+}
+.primary { background: #333; color: #fff; }
+
+.table-panel { overflow: hidden; }
+.table-summary { display: flex; justify-content: space-between; gap: 16px; padding: 15px 18px; border-bottom: 1px solid #ddd; }
+.table-summary p { margin: 0; color: #666; font-size: 13px; }
+.table-summary a { color: #222; font-size: 13px; }
+.table-scroll { overflow-x: auto; }
+
+table { width: 100%; border-collapse: collapse; background: #fff; font-size: 13px; }
+th, td { padding: 12px; border-right: 1px solid #e2e2e2; border-bottom: 1px solid #e2e2e2; text-align: left; vertical-align: top; }
+th { position: sticky; top: 0; background: #f7f7f7; font-size: 12px; }
+.row-number { width: 54px; color: #888; text-align: right; }
+.column-word { min-width: 180px; font-weight: 600; }
+.column-definition { min-width: 420px; max-width: 720px; line-height: 1.45; }
+.column-image { width: 150px; text-align: center; }
+.column-image img { display: block; max-width: 120px; max-height: 90px; margin: auto; object-fit: contain; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 20px 0; font-size: 13px; }
+.pagination a { padding: 8px 12px; background: #fff; }
+
+@media (max-width: 700px) {
+  .page { margin: 22px auto; }
+  .page-header, .page-header.compact, .panel-heading { align-items: flex-start; flex-direction: column; }
+  .summary { grid-template-columns: repeat(2, 1fr); }
+  .panel { padding: 18px; }
+  .metadata dl div { grid-template-columns: 1fr; gap: 5px; }
+  .actions { flex-direction: column-reverse; }
+  .actions a { text-align: center; }
+}

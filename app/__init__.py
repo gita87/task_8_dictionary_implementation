@@ -7,6 +7,7 @@ import os
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
 
+from .qa_web import qa_web
 from .web import web
 
 
@@ -22,6 +23,7 @@ def create_app(test_config: dict | None = None) -> Flask:
         app.config.update(test_config)
 
     app.register_blueprint(web)
+    app.register_blueprint(qa_web)
 
     @app.errorhandler(RequestEntityTooLarge)
     def handle_large_upload(_error: RequestEntityTooLarge):
@@ -30,7 +32,11 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.after_request
     def add_security_headers(response):
-        if request.endpoint == "web.index" or request.path.startswith("/static/"):
+        if (
+            request.endpoint == "web.index"
+            or request.endpoint and request.endpoint.startswith("qa.")
+            or request.path.startswith("/static/")
+        ):
             response.headers["Cache-Control"] = "no-store, max-age=0"
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
         response.headers.setdefault("X-Frame-Options", "DENY")

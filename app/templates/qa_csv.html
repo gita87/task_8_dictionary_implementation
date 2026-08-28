@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Converted CSV results preview.">
+    <title>CSV Results - {{ report.output_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='qa.css') }}">
+  </head>
+  <body>
+    <main class="page page-wide">
+      <header class="page-header compact">
+        <div>
+          <p class="eyebrow">QA REPORT / CSV RESULTS</p>
+          <h1>Converted CSV</h1>
+          <p class="filename">{{ report.output_name }}</p>
+        </div>
+        <a class="secondary" href="{{ url_for('qa.report') }}">Back to report</a>
+      </header>
+
+      <section class="table-panel">
+        <div class="table-summary">
+          <p>Showing rows {{ start_row }}-{{ end_row }} of {{ report.row_count }}</p>
+          <a href="{{ url_for('qa.download') }}">Download complete CSV</a>
+        </div>
+
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                {% for column in columns %}<th scope="col">{{ column }}</th>{% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in rows %}
+                <tr>
+                  <td class="row-number">{{ start_row + loop.index0 }}</td>
+                  {% for column in columns %}
+                    {% set value = row.get(column, '') %}
+                    <td class="column-{{ column }}">
+                      {% if column == 'image' and value[:11] == 'data:image/' %}
+                        <img src="{{ value }}" alt="Image for row {{ start_row + loop.index0 }}" loading="lazy">
+                      {% else %}
+                        {{ value }}
+                      {% endif %}
+                    </td>
+                  {% endfor %}
+                </tr>
+              {% else %}
+                <tr><td colspan="{{ columns|length + 1 }}">No data rows were produced.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {% if page_count > 1 %}
+        <nav class="pagination" aria-label="CSV result pages">
+          {% if page > 1 %}<a href="{{ url_for('qa.csv_results', page=page - 1) }}">Previous</a>{% endif %}
+          <span>Page {{ page }} of {{ page_count }}</span>
+          {% if page < page_count %}<a href="{{ url_for('qa.csv_results', page=page + 1) }}">Next</a>{% endif %}
+        </nav>
+      {% endif %}
+    </main>
+  </body>
+</html>
+

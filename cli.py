@@ -6,10 +6,12 @@ import argparse
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 from typing import Optional, Sequence
 
 from app.converter import ConversionError, convert_docx
+from app.qa import build_qa_session
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -29,6 +31,23 @@ def build_parser() -> argparse.ArgumentParser:
         default=75,
         metavar="1-100",
         help="WebP quality for embedded images (default: 75).",
+    )
+    parser.add_argument(
+        "--qa",
+        action="store_true",
+        help="Run QA checks and open the browser report after conversion.",
+    )
+    parser.add_argument(
+        "--qa-port",
+        type=int,
+        default=0,
+        metavar="PORT",
+        help="Local QA report port. The default selects an available port automatically.",
+    )
+    parser.add_argument(
+        "--no-browser",
+        action="store_true",
+        help="Start the QA report server without opening the browser automatically.",
     )
     return parser
 
@@ -75,15 +94,31 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         parser.error("the input and output paths must be different")
     if not 1 <= args.image_quality <= 100:
         parser.error("--image-quality must be between 1 and 100")
+    if not 0 <= args.qa_port <= 65535:
+        parser.error("--qa-port must be between 0 and 65535")
+    if args.no_browser and not args.qa:
+        parser.error("--no-browser can only be used together with --qa")
 
     try:
+        print(f"[1/3] Converting {input_path.name}...", flush=True)
+        started_at = time.perf_counter()
         with input_path.open("rb") as source:
             result = convert_docx(
                 source,
                 input_filename=input_path.name,
                 image_quality=args.image_quality,
             )
+        duration_seconds = time.perf_counter() - started_at
         write_atomic(output_path, result.content)
+        qa_session = None
+        if args.qa:
+            print("[2/3] Running QA checks...", flush=True)
+            qa_session = build_qa_session(
+                input_path,
+                output_path,
+                result,
+                duration_seconds,
+            )
     except ConversionError as error:
         print(f"Conversion failed: {error}", file=sys.stderr)
         return 1
@@ -93,9 +128,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     columns = ", ".join(result.columns)
     print(f"Created {output_path} ({result.row_count} rows; columns: {columns})")
+
+    if qa_session is not None:
+        from app.qa_server import serve_qa_report
+
+        try:
+            print("[3/3] Starting QA report server...", flush=True)
+            serve_qa_report(
+                qa_session,
+                port=args.qa_port,
+                open_browser=not args.no_browser,
+            )
+        except OSError as error:
+            print(f"QA report server failed: {error}", file=sys.stderr)
+            return 1
+
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

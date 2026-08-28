@@ -184,7 +184,7 @@ def _validated_docx_buffer(source: BinaryIO) -> io.BytesIO:
         raise ConversionError("The uploaded DOCX could not be read.") from error
 
     if not payload:
-        raise ConversionError("File DOCX kosong.")
+        raise ConversionError("The DOCX file is empty.")
 
     buffer = io.BytesIO(payload)
     try:

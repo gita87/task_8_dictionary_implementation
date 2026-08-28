@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="DOCX-to-CSV quality assurance report.">
+    <title>QA Report - {{ report.input_name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='qa.css') }}">
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <div>
+          <p class="eyebrow">DOCX TO CSV</p>
+          <h1>Quality Assurance Report</h1>
+          <p class="filename">{{ report.input_name }}</p>
+        </div>
+        <span class="overall overall-{{ report.status|lower|replace(' ', '-') }}">{{ report.status }}</span>
+      </header>
+
+      <section class="summary" aria-label="Conversion summary">
+        <article><strong>{{ report.row_count }}</strong><span>Rows</span></article>
+        <article><strong>{{ report.columns|length }}</strong><span>Columns</span></article>
+        <article><strong>{{ report.image_count }}</strong><span>Images</span></article>
+        <article><strong>{{ "%.2f"|format(report.duration_seconds) }}s</strong><span>Conversion</span></article>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <h2>Automated checks</h2>
+          <p>{{ report.passed_count }} passed, {{ report.warning_count }} warnings, {{ report.failed_count }} failed</p>
+        </div>
+        <div class="check-list">
+          {% for check in report.checks %}
+            <article class="check">
+              <span class="check-status check-{{ check.status }}">{{ check.status|upper }}</span>
+              <div>
+                <h3>{{ check.name }}</h3>
+                <p>{{ check.details }}</p>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="panel metadata">
+        <h2>Artifact details</h2>
+        <dl>
+          <div><dt>Output file</dt><dd>{{ report.output_name }}</dd></div>
+          <div><dt>Columns</dt><dd>{{ report.columns|join(', ') }}</dd></div>
+          <div><dt>Input size</dt><dd>{{ "%.2f"|format(report.input_size / 1024 / 1024) }} MB</dd></div>
+          <div><dt>Output size</dt><dd>{{ "%.2f"|format(report.output_size / 1024 / 1024) }} MB</dd></div>
+          <div><dt>Input SHA-256</dt><dd class="hash">{{ report.input_sha256 }}</dd></div>
+          <div><dt>Output SHA-256</dt><dd class="hash">{{ report.output_sha256 }}</dd></div>
+        </dl>
+      </section>
+
+      <nav class="actions" aria-label="QA report actions">
+        <a class="secondary" href="{{ url_for('qa.download') }}">Download CSV</a>
+        <a class="primary" href="{{ url_for('qa.csv_results') }}">View CSV results</a>
+      </nav>
+    </main>
+  </body>
+</html>
+

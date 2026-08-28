@@ -57,6 +57,19 @@ For a custom WebP image quality between 1 and 100:
 
 Use quoted paths when a filename or directory contains spaces.
 
+### Run quality assurance from the CLI
+
+Add `--qa` to convert the DOCX, run automated checks, and open the QA report in
+the default browser:
+
+```bash
+.venv/bin/python cli.py input.docx output.csv --qa
+```
+
+The first page shows the QA report. Select **View CSV results** to open the
+paginated conversion preview in the same browser tab. Press `Ctrl+C` in the
+terminal when the report is no longer needed.
+
 ## Run in production
 
 Use a WSGI server and adjust the worker count to match the host capacity:

@@ -6,6 +6,7 @@ import io
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from cli import main
 from tests.test_converter import make_docx
@@ -48,12 +49,43 @@ class CliTests(unittest.TestCase):
             input_path.write_bytes(b"not a docx")
             stderr = io.StringIO()
 
-            with contextlib.redirect_stderr(stderr):
+            with (
+                contextlib.redirect_stdout(io.StringIO()),
+                contextlib.redirect_stderr(stderr),
+            ):
                 status = main([str(input_path), str(output_path)])
 
             self.assertEqual(status, 1)
             self.assertIn("Conversion failed", stderr.getvalue())
             self.assertFalse(output_path.exists())
+
+    def test_qa_mode_builds_and_serves_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            input_path = Path(directory) / "terms.docx"
+            output_path = Path(directory) / "terms.csv"
+            input_path.write_bytes(make_docx(True).getvalue())
+
+            stdout = io.StringIO()
+            with (
+                patch("app.qa_server.serve_qa_report") as serve,
+                contextlib.redirect_stdout(stdout),
+            ):
+                status = main(
+                    [
+                        str(input_path),
+                        str(output_path),
+                        "--qa",
+                        "--no-browser",
+                    ]
+                )
+
+            self.assertEqual(status, 0)
+            serve.assert_called_once()
+            session = serve.call_args.args[0]
+            self.assertEqual(session.report.status, "PASSED")
+            self.assertIn("[1/3] Converting", stdout.getvalue())
+            self.assertIn("[2/3] Running QA checks", stdout.getvalue())
+            self.assertIn("[3/3] Starting QA report server", stdout.getvalue())
 
 
 if __name__ == "__main__":
