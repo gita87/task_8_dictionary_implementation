@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Convert a DOCX dictionary table into CSV.">
+    <title>DOCX to CSV</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body>
+    <main class="converter">
+      <h1>DOCX to CSV</h1>
+
+      <form id="convert-form" action="{{ url_for('web.convert') }}" method="post" enctype="multipart/form-data">
+        <input
+          id="document"
+          name="document"
+          type="file"
+          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+          required
+        >
+        <button class="file-button" id="file-button" type="button">Choose DOCX and convert</button>
+      </form>
+
+      <p class="message" id="message" role="status" aria-live="polite"></p>
+    </main>
+  </body>
+</html>
