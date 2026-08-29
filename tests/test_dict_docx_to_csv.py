@@ -4,13 +4,19 @@ import base64
 import csv
 import io
 import unittest
+from unittest.mock import patch
 
 from docx import Document
 from docx.enum.text import WD_COLOR_INDEX
 from docx.shared import Inches
 from PIL import Image
 
-from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
+from dict_docx_to_csv import (
+    ConversionError,
+    WEBP_DATA_URI_PREFIX,
+    convert_dictionary_docx_to_csv,
+    image_to_data_uri,
+)
 
 
 def make_png() -> io.BytesIO:
@@ -78,11 +84,35 @@ class ConverterTests(unittest.TestCase):
 
         self.assertEqual(result.columns, ("word", "definition", "image"))
         rows = decode_tsv(result.content)
-        self.assertTrue(rows[0]["image"].startswith("data:image/webp;base64,"))
+        self.assertTrue(rows[0]["image"].startswith(WEBP_DATA_URI_PREFIX))
         payload = rows[0]["image"].split(",", 1)[1]
         with Image.open(io.BytesIO(base64.b64decode(payload))) as image:
             self.assertEqual(image.format, "WEBP")
         self.assertEqual(rows[1]["image"], "")
+
+    def test_ignores_text_in_an_image_cell_without_an_embedded_image(self):
+        document = Document()
+        table = document.add_table(rows=2, cols=3)
+        for index, header in enumerate(("word", "definition", "image")):
+            table.cell(0, index).text = header
+        table.cell(1, 0).text = "plain"
+        table.cell(1, 1).text = "definition"
+        table.cell(1, 2).text = "this text is not an image"
+
+        stream = io.BytesIO()
+        document.save(stream)
+        stream.seek(0)
+
+        rows = decode_tsv(convert_dictionary_docx_to_csv(stream).content)
+        self.assertEqual(rows[0]["image"], "")
+
+    def test_rejects_an_image_that_cannot_be_converted_to_webp(self):
+        with patch(
+            "dict_docx_to_csv._first_image_blob",
+            return_value=(b"not-an-image", "image/png"),
+        ):
+            with self.assertRaisesRegex(ConversionError, "required WebP"):
+                image_to_data_uri(object())
 
     def test_ignores_formatting_list_markers_and_nested_table(self):
         document = Document()

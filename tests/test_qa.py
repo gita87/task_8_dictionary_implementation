@@ -11,7 +11,7 @@ from dict_docx_to_csv import (
     convert_dictionary_docx_to_csv,
     rows_to_csv,
 )
-from app.qa import PASS, build_qa_session
+from app.qa import FAIL, PASS, build_qa_session
 from tests.test_dict_docx_to_csv import make_docx
 
 
@@ -92,6 +92,68 @@ class QualityAssuranceTests(unittest.TestCase):
                 if check.name == "Adaptive image output"
             )
             self.assertEqual(image_check.status, PASS)
+
+    def test_rejects_non_webp_image_data_uri(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_path = root / "dictionary.docx"
+            output_path = root / "dictionary.csv"
+            input_path.write_bytes(b"QA fixture")
+            columns = ("word", "definition", "image")
+            content = rows_to_csv(
+                columns,
+                [
+                    {
+                        "word": "test",
+                        "definition": "invalid image format",
+                        "image": "data:image/png;base64,aW52YWxpZA==",
+                    }
+                ],
+            )
+            conversion = ConversionResult(
+                content=content,
+                filename=output_path.name,
+                row_count=1,
+                columns=columns,
+            )
+
+            session = build_qa_session(input_path, output_path, conversion, 0.1)
+            image_check = next(
+                check
+                for check in session.report.checks
+                if check.name == "Adaptive image output"
+            )
+
+            self.assertEqual(image_check.status, FAIL)
+            self.assertEqual(session.report.status, "FAILED")
+
+    def test_rejects_empty_required_cells(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            input_path = root / "dictionary.docx"
+            output_path = root / "dictionary.csv"
+            input_path.write_bytes(b"QA fixture")
+            columns = ("word", "definition")
+            content = rows_to_csv(
+                columns,
+                [{"word": "incomplete", "definition": ""}],
+            )
+            conversion = ConversionResult(
+                content=content,
+                filename=output_path.name,
+                row_count=1,
+                columns=columns,
+            )
+
+            session = build_qa_session(input_path, output_path, conversion, 0.1)
+            completeness_check = next(
+                check
+                for check in session.report.checks
+                if check.name == "Required cell completeness"
+            )
+
+            self.assertEqual(completeness_check.status, FAIL)
+            self.assertEqual(session.report.status, "FAILED")
 
 
 if __name__ == "__main__":

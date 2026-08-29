@@ -222,11 +222,11 @@ Every parsed row is checked for nonempty `word` and `definition` values.
 | Result | Status |
 | --- | --- |
 | Every required cell is populated | Pass |
-| One or more required cells are empty | Warning |
+| One or more required cells are empty | Fail |
 
 The report provides separate counts for empty word cells and empty definition
-cells. Empty required values are warnings because the CSV remains structurally
-valid, but the dictionary content may require editorial review.
+cells. Empty required values violate the output contract and invalidate the
+conversion result.
 
 ### 7. Plain-text output
 
@@ -255,17 +255,16 @@ If the image column is absent:
 
 If the image column is present, each populated image value must:
 
-- begin with `data:image/`;
-- include `;base64,`;
-- contain syntactically valid base64; and
-- preferably use the `data:image/webp;base64` media header.
+- begin exactly with `data:image/webp;base64,`;
+- contain a non-empty, syntactically valid base64 payload; and
+- never use a fallback image media type.
 
 | Result | Status |
 | --- | --- |
 | Every populated image is valid WebP base64 | Pass |
 | The column exists but all image cells are empty | Warning |
-| Every image is valid, but one or more use fallback formats | Warning |
-| One or more populated cells are not valid base64 image data URIs | Fail |
+| One or more populated images use another media type | Fail |
+| One or more populated cells contain invalid or empty base64 | Fail |
 
 The report's image count represents the number of valid populated image cells
 in the CSV. It does **not** represent the number of unique media files stored

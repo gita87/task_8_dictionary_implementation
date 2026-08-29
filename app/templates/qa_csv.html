@@ -39,7 +39,7 @@
                   {% for column in columns %}
                     {% set value = row.get(column, '') %}
                     <td class="column-{{ column }}">
-                      {% if column == 'image' and value[:11] == 'data:image/' %}
+                      {% if column == 'image' and value[:23] == 'data:image/webp;base64,' %}
                         <img src="{{ value }}" alt="Image for row {{ start_row + loop.index0 }}" loading="lazy">
                       {% else %}
                         {{ value }}
@@ -65,4 +65,3 @@
     </main>
   </body>
 </html>
-
