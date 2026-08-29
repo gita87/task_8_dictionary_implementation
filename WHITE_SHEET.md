@@ -14,8 +14,8 @@ a command-line interface.
 The engine is designed around a narrow and deterministic dictionary schema:
 `word` and `definition` are required, while `image` is optional. When an image
 column is present, embedded images are converted to WebP and stored as base64
-data URIs. When it is absent, the output automatically contains only the two
-required text columns.
+data URIs beginning exactly with `data:image/webp;base64,`. When it is absent,
+the output automatically contains only the two required text columns.
 
 The resulting file uses a `.csv` extension for compatibility with downstream
 workflows, but its delimiter is a tab character (`\t`). The encoding is UTF-8
@@ -101,8 +101,10 @@ or:
 word<TAB>definition<TAB>image
 ```
 
-Rows that are completely empty after extraction are omitted. Individual empty
-cells remain empty so that column alignment is preserved.
+Rows that are completely empty after extraction are omitted. Every emitted row
+must contain non-empty `word` and `definition` values. An empty required cell
+stops conversion with a row-specific error. An optional image cell may remain
+empty when the DOCX cell contains no embedded image.
 
 ## Conversion architecture
 
@@ -178,9 +180,9 @@ The standard processing path is:
 6. store the result as `data:image/webp;base64,...`.
 
 The CLI accepts an image-quality value from 1 to 100. If Pillow cannot decode
-or convert a supported embedded image, the original bytes are preserved as a
-base64 data URI using their original content type. An image cell without an
-embedded image falls back to its plain-text content, if any.
+or convert an embedded image to WebP, conversion fails rather than emitting a
+fallback media type. An image cell without an embedded image remains empty;
+plain text in the image cell is not copied into the CSV.
 
 Base64 makes the output self-contained but increases file size. Documents with
 many or large images can therefore produce CSV files substantially larger than

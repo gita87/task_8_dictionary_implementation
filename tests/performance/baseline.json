@@ -1,0 +1,31 @@
+{
+  "calibrated_at": "2026-08-29",
+  "iterations": 3,
+  "input_file": "production_dictionary.docx",
+  "input_size_bytes": 23857996,
+  "output_size_bytes": 16593292,
+  "row_count": 195,
+  "image_count": 195,
+  "output_sha256": "1df87c39c83803f9eb8aaf9613620a3c84be1c2978f57ee83686fb43a8767afb",
+  "duration_seconds": {
+    "minimum": 11.843376,
+    "median": 11.946409,
+    "maximum": 12.028282
+  },
+  "peak_rss_bytes": {
+    "minimum": 182747136,
+    "median": 182779904,
+    "maximum": 182910976
+  },
+  "environment": {
+    "platform": "macOS-26.5.1-arm64-arm-64bit",
+    "python": "3.9.6",
+    "pillow": "11.3.0",
+    "python_docx": "1.2.0",
+    "lxml": "6.1.2"
+  },
+  "threshold_policy": {
+    "duration_tolerance": "approximately 30 percent, rounded to 16 seconds",
+    "memory_tolerance": "approximately 30 percent, rounded to 256 MB"
+  }
+}

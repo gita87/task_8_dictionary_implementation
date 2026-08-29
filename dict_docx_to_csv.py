@@ -19,6 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 REQUIRED_HEADERS = ("word", "definition")
 OPTIONAL_HEADERS = ("image",)
+WEBP_DATA_URI_PREFIX = "data:image/webp;base64,"
 DEFAULT_IMAGE_QUALITY = 75
 MAX_UNCOMPRESSED_DOCX_BYTES = 250 * 1024 * 1024
 MAX_DOCX_MEMBERS = 10_000
@@ -98,12 +99,12 @@ def _first_image_blob(cell: _Cell) -> tuple[bytes, str] | None:
 
 
 def image_to_data_uri(cell: _Cell, quality: int = DEFAULT_IMAGE_QUALITY) -> str:
-    """Convert a cell's first embedded image to WebP, preserving bytes as fallback."""
+    """Convert a cell's first embedded image to the required WebP data URI."""
     image_data = _first_image_blob(cell)
     if image_data is None:
-        return plain_cell_text(cell)
+        return ""
 
-    blob, content_type = image_data
+    blob, _content_type = image_data
     try:
         with Image.open(io.BytesIO(blob)) as source:
             image = ImageOps.exif_transpose(source)
@@ -114,10 +115,16 @@ def image_to_data_uri(cell: _Cell, quality: int = DEFAULT_IMAGE_QUALITY) -> str:
             output = io.BytesIO()
             image.save(output, format="WEBP", quality=quality, method=6)
             encoded = base64.b64encode(output.getvalue()).decode("ascii")
-            return f"data:image/webp;base64,{encoded}"
-    except (Image.DecompressionBombError, UnidentifiedImageError, OSError, ValueError):
-        encoded = base64.b64encode(blob).decode("ascii")
-        return f"data:{content_type};base64,{encoded}"
+            return f"{WEBP_DATA_URI_PREFIX}{encoded}"
+    except (
+        Image.DecompressionBombError,
+        UnidentifiedImageError,
+        OSError,
+        ValueError,
+    ) as error:
+        raise ConversionError(
+            "An embedded image could not be converted to the required WebP format."
+        ) from error
 
 
 def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY):
@@ -132,7 +139,7 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
     columns = tuple(REQUIRED_HEADERS + OPTIONAL_HEADERS if has_image else REQUIRED_HEADERS)
     rows: list[dict[str, str]] = []
 
-    for table_row in table.rows[1:]:
+    for row_number, table_row in enumerate(table.rows[1:], start=2):
         cells = table_row.cells
         row: dict[str, str] = {}
 
@@ -148,8 +155,20 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
                 else ""
             )
 
-        if any(value.strip() for value in row.values()):
-            rows.append(row)
+        if not any(value.strip() for value in row.values()):
+            continue
+
+        missing_required = [
+            column for column in REQUIRED_HEADERS if not row[column].strip()
+        ]
+        if missing_required:
+            missing = ", ".join(missing_required)
+            raise ConversionError(
+                f"Dictionary table row {row_number} has empty required "
+                f"cell(s): {missing}."
+            )
+
+        rows.append(row)
 
     return columns, rows
 

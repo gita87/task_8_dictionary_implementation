@@ -14,12 +14,17 @@ The engine selects the best top-level table containing these headers
 - `image` - optional
 
 When the `image` header is present, the first image in each cell is converted
-to a WebP data URI. Without that header, the output contains only `word` and
-`definition`. Rich text, highlights, list/numbering formats, and nested tables
-are not preserved.
+to a WebP data URI whose value starts exactly with
+`data:image/webp;base64,`. Empty image cells remain empty, and an image that
+cannot be converted to WebP stops the conversion. Without the `image` header,
+the output contains only `word` and `definition`. Rich text, highlights,
+list/numbering formats, and nested tables are not preserved.
 
 The output follows the reference format: a `.csv` extension, tab delimiter,
 UTF-8 encoding with BOM, and CRLF line endings.
+
+The complete mandatory contract is documented in
+[`docs/OUTPUT_CONTRACT.md`](docs/OUTPUT_CONTRACT.md).
 
 ## Run locally
 
@@ -30,6 +35,9 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python wsgi.py
 ```
+
+For the reproducible environment used by golden and performance verification,
+install `requirements-lock.txt` instead of the shorter direct-dependency file.
 
 The default browser opens `http://127.0.0.1:8000` automatically. If the
 operating system cannot open it, visit the same address manually.
@@ -106,4 +114,23 @@ Gunicorn for a public deployment.
 ```
 
 The test suite builds DOCX fixtures dynamically for documents with and without
-images, invalid documents, unmatched tables, and web endpoints.
+images, invalid documents, unmatched tables, output-contract rules, the
+approved production golden pair, performance instrumentation, and web
+endpoints.
+
+The production golden test converts the approved DOCX and compares its output
+with the expected CSV byte for byte. Fixture integrity is also verified against
+the SHA-256 values in `tests/fixtures/golden/manifest.json`.
+
+## Performance test
+
+Run the production benchmark with three isolated conversions:
+
+```bash
+.venv/bin/python -m tests.performance.benchmark_pipeline
+```
+
+The benchmark checks median duration, maximum peak RSS memory, row count, image
+count, and output SHA-256. The generated report is saved as
+`reports/performance/latest.json`. Thresholds and the approved local baseline
+are stored in `tests/performance/`.

@@ -14,3 +14,10 @@ build/
 *.csv
 input/
 output/
+
+# Approved production golden files are versioned test fixtures.
+!tests/fixtures/golden/*.docx
+!tests/fixtures/golden/*.expected.csv
+
+# Local benchmark reports are generated artifacts.
+reports/performance/*.json

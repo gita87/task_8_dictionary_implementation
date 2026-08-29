@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from dict_docx_to_csv import ConversionResult
+from dict_docx_to_csv import ConversionResult, WEBP_DATA_URI_PREFIX
 
 
 PASS = "pass"
@@ -90,10 +90,9 @@ def _parse_csv(content: bytes) -> tuple[list[str], list[dict[str, str]]]:
     return list(reader.fieldnames or []), rows
 
 
-def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int, int]:
+def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int]:
     populated = 0
     valid = 0
-    webp = 0
 
     for row in rows:
         value = (row.get("image") or "").strip()
@@ -101,20 +100,20 @@ def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int, int]:
             continue
         populated += 1
 
-        if not value.startswith("data:image/") or ";base64," not in value:
+        if not value.startswith(WEBP_DATA_URI_PREFIX):
             continue
 
-        header, payload = value.split(",", 1)
+        payload = value[len(WEBP_DATA_URI_PREFIX) :]
+        if not payload:
+            continue
         try:
             base64.b64decode(payload, validate=True)
         except (binascii.Error, ValueError):
             continue
 
         valid += 1
-        if header.casefold() == "data:image/webp;base64":
-            webp += 1
 
-    return populated, valid, webp
+    return populated, valid
 
 
 def build_qa_session(
@@ -194,7 +193,7 @@ def build_qa_session(
     checks.append(
         QACheck(
             "Required cell completeness",
-            PASS if missing_required == 0 else WARNING,
+            PASS if missing_required == 0 else FAIL,
             "Every row contains both a word and a definition."
             if missing_required == 0
             else f"Found {empty_words} empty word cells and {empty_definitions} empty definition cells.",
@@ -218,17 +217,17 @@ def build_qa_session(
 
     image_count = 0
     if "image" in conversion.columns:
-        populated, valid, webp = _image_metrics(rows)
+        populated, valid = _image_metrics(rows)
         image_count = valid
         if populated == 0:
             image_status = WARNING
             image_details = "The image column is present, but every image cell is empty."
         elif valid != populated:
             image_status = FAIL
-            image_details = f"Validated {valid} of {populated} populated image cells as base64 image data URIs."
-        elif webp != valid:
-            image_status = WARNING
-            image_details = f"Validated {valid} images; {webp} are WebP and {valid - webp} use fallback formats."
+            image_details = (
+                f"Validated {valid} of {populated} populated image cells as "
+                f"{WEBP_DATA_URI_PREFIX} values."
+            )
         else:
             image_status = PASS
             image_details = f"Validated {valid} WebP base64 image data URIs."
