@@ -9,7 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from cli import main
-from tests.test_converter import make_docx
+from tests.test_dict_docx_to_csv import make_docx
 
 
 class CliTests(unittest.TestCase):

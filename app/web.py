@@ -7,7 +7,7 @@ import io
 from flask import Blueprint, jsonify, render_template, request, send_file
 from werkzeug.utils import secure_filename
 
-from .converter import ConversionError, convert_docx
+from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
 
 
 web = Blueprint("web", __name__)
@@ -34,7 +34,10 @@ def convert():
         return jsonify(error="The file must use the .docx format."), 400
 
     try:
-        result = convert_docx(upload.stream, input_filename=safe_name)
+        result = convert_dictionary_docx_to_csv(
+            upload.stream,
+            input_filename=safe_name,
+        )
     except ConversionError as error:
         return jsonify(error=str(error)), 422
 

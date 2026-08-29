@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Optional, Sequence
 
-from app.converter import ConversionError, convert_docx
+from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
 from app.qa import build_qa_session
 
 
@@ -103,7 +103,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"[1/3] Converting {input_path.name}...", flush=True)
         started_at = time.perf_counter()
         with input_path.open("rb") as source:
-            result = convert_docx(
+            result = convert_dictionary_docx_to_csv(
                 source,
                 input_filename=input_path.name,
                 image_quality=args.image_quality,

@@ -10,7 +10,7 @@ from docx.enum.text import WD_COLOR_INDEX
 from docx.shared import Inches
 from PIL import Image
 
-from app.converter import ConversionError, convert_docx
+from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
 
 
 def make_png() -> io.BytesIO:
@@ -59,7 +59,10 @@ def decode_tsv(content: bytes):
 
 class ConverterTests(unittest.TestCase):
     def test_converts_required_columns_without_image(self):
-        result = convert_docx(make_docx(False, extra_table=True), "terms.docx")
+        result = convert_dictionary_docx_to_csv(
+            make_docx(False, extra_table=True),
+            "terms.docx",
+        )
 
         self.assertEqual(result.columns, ("word", "definition"))
         self.assertEqual(result.filename, "terms.csv")
@@ -71,7 +74,7 @@ class ConverterTests(unittest.TestCase):
         self.assertIn(b"\r\n", result.content)
 
     def test_adapts_to_image_column_and_emits_webp(self):
-        result = convert_docx(make_docx(True), "terms.docx")
+        result = convert_dictionary_docx_to_csv(make_docx(True), "terms.docx")
 
         self.assertEqual(result.columns, ("word", "definition", "image"))
         rows = decode_tsv(result.content)
@@ -101,7 +104,7 @@ class ConverterTests(unittest.TestCase):
         document.save(stream)
         stream.seek(0)
 
-        rows = decode_tsv(convert_docx(stream).content)
+        rows = decode_tsv(convert_dictionary_docx_to_csv(stream).content)
         self.assertEqual(rows[0]["definition"], "visible definition")
         self.assertNotIn("nested", rows[0]["definition"])
 
@@ -113,11 +116,11 @@ class ConverterTests(unittest.TestCase):
         stream.seek(0)
 
         with self.assertRaisesRegex(ConversionError, "word.*definition"):
-            convert_docx(stream)
+            convert_dictionary_docx_to_csv(stream)
 
     def test_rejects_invalid_docx(self):
         with self.assertRaises(ConversionError):
-            convert_docx(io.BytesIO(b"not a docx"))
+            convert_dictionary_docx_to_csv(io.BytesIO(b"not a docx"))
 
 
 if __name__ == "__main__":

@@ -206,7 +206,7 @@ def _validated_docx_buffer(source: BinaryIO) -> io.BytesIO:
     return buffer
 
 
-def convert_docx(
+def convert_dictionary_docx_to_csv(
     source: BinaryIO,
     input_filename: str = "dictionary.docx",
     image_quality: int = DEFAULT_IMAGE_QUALITY,

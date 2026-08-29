@@ -4,7 +4,7 @@ import io
 import unittest
 
 from app import create_app
-from tests.test_converter import make_docx
+from tests.test_dict_docx_to_csv import make_docx
 
 
 class WebTests(unittest.TestCase):

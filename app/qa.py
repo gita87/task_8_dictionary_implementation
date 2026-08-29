@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from .converter import ConversionResult
+from dict_docx_to_csv import ConversionResult
 
 
 PASS = "pass"

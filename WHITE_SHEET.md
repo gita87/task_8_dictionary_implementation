@@ -123,7 +123,7 @@ flowchart LR
 ```
 
 The conversion core is independent of the delivery surface. Both the web
-application and CLI call the same `convert_docx()` function, ensuring that they
+application and CLI call the same `convert_dictionary_docx_to_csv()` function, ensuring that they
 apply the same table selection, text extraction, image processing, and output
 serialization rules.
 

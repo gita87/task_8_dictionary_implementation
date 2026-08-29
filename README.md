@@ -57,6 +57,23 @@ For a custom WebP image quality between 1 and 100:
 
 Use quoted paths when a filename or directory contains spaces.
 
+## Integrate with another Python system
+
+Import the conversion pipeline directly from its project-specific module:
+
+```python
+from dict_docx_to_csv import convert_dictionary_docx_to_csv
+
+with open("input.docx", "rb") as source:
+    result = convert_dictionary_docx_to_csv(
+        source,
+        input_filename="input.docx",
+    )
+
+with open(result.filename, "wb") as output:
+    output.write(result.content)
+```
+
 ### Run quality assurance from the CLI
 
 Add `--qa` to convert the DOCX, run automated checks, and open the QA report in

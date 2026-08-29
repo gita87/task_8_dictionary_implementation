@@ -6,9 +6,13 @@ import unittest
 from pathlib import Path
 
 from app import create_app
-from app.converter import ConversionResult, convert_docx, rows_to_csv
+from dict_docx_to_csv import (
+    ConversionResult,
+    convert_dictionary_docx_to_csv,
+    rows_to_csv,
+)
 from app.qa import PASS, build_qa_session
-from tests.test_converter import make_docx
+from tests.test_dict_docx_to_csv import make_docx
 
 
 class QualityAssuranceTests(unittest.TestCase):
@@ -18,7 +22,7 @@ class QualityAssuranceTests(unittest.TestCase):
         output_path = root / "dictionary.csv"
         input_path.write_bytes(make_docx(True).getvalue())
         with input_path.open("rb") as source:
-            conversion = convert_docx(source, input_path.name)
+            conversion = convert_dictionary_docx_to_csv(source, input_path.name)
         output_path.write_bytes(conversion.content)
         return build_qa_session(input_path, output_path, conversion, 0.25)
 
