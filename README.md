@@ -65,6 +65,17 @@ For a custom WebP image quality between 1 and 100:
 
 Use quoted paths when a filename or directory contains spaces.
 
+## Run by double-clicking an icon
+
+Desktop launchers untuk Windows dan macOS tersedia di folder `launchers/`:
+
+- Windows: double-click `launchers/windows/DictFlow.bat`
+- macOS: double-click `launchers/mac/DictFlow.command`
+
+Launcher menjalankan server lokal dan membuka browser default ke
+`http://127.0.0.1:8000`. Asset icon untuk shortcut desktop disimpan di
+`assets/icons/`; panduan lengkapnya ada di [`launchers/README.md`](launchers/README.md).
+
 ## Integrate with another Python system
 
 Import the conversion pipeline directly from its project-specific module:
@@ -111,6 +122,16 @@ Gunicorn for a public deployment.
 
 ```bash
 .venv/bin/python -m unittest discover -v
+```
+
+## Sandbox notebook
+
+Notebook inspeksi pipeline tersedia di
+[`sandbox/inspect_pipeline.ipynb`](sandbox/inspect_pipeline.ipynb). Jalankan
+dengan Jupyter dari root project:
+
+```bash
+.venv/bin/python -m jupyter notebook sandbox/inspect_pipeline.ipynb
 ```
 
 The test suite builds DOCX fixtures dynamically for documents with and without
