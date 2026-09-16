@@ -19,6 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 REQUIRED_HEADERS = ("word", "definition")
 OPTIONAL_HEADERS = ("image",)
+MISSING_IMAGE_VALUE = "NA"
 GENERATED_HEADERS = ("unique_id",)
 WEBP_DATA_URI_PREFIX = "data:image/webp;base64,"
 DEFAULT_IMAGE_QUALITY = 75
@@ -100,10 +101,10 @@ def _first_image_blob(cell: _Cell) -> tuple[bytes, str] | None:
 
 
 def image_to_data_uri(cell: _Cell, quality: int = DEFAULT_IMAGE_QUALITY) -> str:
-    """Convert a cell's first embedded image to the required WebP data URI."""
+    """Convert a cell's first embedded image to WebP, or return ``NA``."""
     image_data = _first_image_blob(cell)
     if image_data is None:
-        return ""
+        return MISSING_IMAGE_VALUE
 
     blob, _content_type = image_data
     try:
@@ -140,7 +141,7 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
     columns = tuple(
         GENERATED_HEADERS
         + REQUIRED_HEADERS
-        + (OPTIONAL_HEADERS if has_image else ())
+        + OPTIONAL_HEADERS
     )
     rows: list[dict[str, str]] = []
 
@@ -157,10 +158,14 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
             row["image"] = (
                 image_to_data_uri(cells[image_index], image_quality)
                 if image_index < len(cells)
-                else ""
+                else MISSING_IMAGE_VALUE
             )
+        else:
+            row["image"] = MISSING_IMAGE_VALUE
 
-        if not any(value.strip() for value in row.values()):
+        # ``image`` always has a sentinel value, so determine empty rows from
+        # the required text fields only.
+        if not any(row[column].strip() for column in REQUIRED_HEADERS):
             continue
 
         missing_required = [

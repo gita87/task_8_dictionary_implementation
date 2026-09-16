@@ -96,7 +96,7 @@ def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int]:
 
     for row in rows:
         value = (row.get("image") or "").strip()
-        if not value:
+        if not value or value == "NA":
             continue
         populated += 1
 
@@ -233,7 +233,7 @@ def build_qa_session(
             image_details = f"Validated {valid} WebP base64 image data URIs."
     else:
         image_status = PASS
-        image_details = "No image header was present, so the adaptive output correctly omits the image column."
+        image_details = "The image column is present in the output schema."
 
     checks.append(QACheck("Adaptive image output", image_status, image_details))
 

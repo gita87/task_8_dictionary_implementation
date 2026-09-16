@@ -11,7 +11,7 @@ The engine selects the best top-level table containing these headers
 
 - `word` - required
 - `definition` - required
-- `image` - optional
+- `image` - always present in the output; optional in the source DOCX
 
 Every exported row also receives a generated `unique_id` in the format
 `0001`, `0002`, and so on. The identifier is the first output column and is
@@ -20,9 +20,10 @@ for this column so Excel preserves the leading zeroes when opening the file.
 
 When the `image` header is present, the first image in each cell is converted
 to a WebP data URI whose value starts exactly with
-`data:image/webp;base64,`. Empty image cells remain empty, and an image that
-cannot be converted to WebP stops the conversion. Without the `image` header,
-the output contains only `word` and `definition`. Rich text, highlights,
+`data:image/webp;base64,`. Missing images use the literal string `NA`, and an
+image that cannot be converted to WebP stops the conversion. Without the
+`image` header, the output still contains `image`, with `NA` in every row.
+Rich text, highlights,
 list/numbering formats, and nested tables are not preserved.
 
 The output follows the reference format: a `.csv` extension, tab delimiter,

@@ -30,14 +30,15 @@ The output columns use lowercase names and this exact order:
    the leading zeroes;
 2. `word` — required;
 3. `definition` — required; and
-4. `image` — included only when the selected DOCX table contains an `image`
-   header.
+4. `image` — always included; populated with a WebP data URI when an embedded
+   image exists, otherwise the literal string `NA`.
 
 Every emitted row must contain a non-empty `word` and `definition`. A fully
 empty table row is ignored. A partially populated row with an empty required
 cell is invalid and stops conversion with a row-specific error.
 
-An `image` cell may be empty when its DOCX cell has no embedded image.
+An `image` cell contains `NA` when its DOCX cell has no embedded image or when
+the source table has no `image` column.
 
 ## Text normalization
 
@@ -67,7 +68,7 @@ as `<img src="...">` or a framework binding such as `<img [src]="...">`.
 PNG, JPEG, GIF, SVG, and other media-type prefixes are not permitted in the
 CSV. Every embedded source image is converted to WebP. If conversion to WebP
 fails, the complete DOCX conversion fails rather than emitting a fallback
-format.
+format. Missing images are represented by the literal string `NA`.
 
 ## Compatibility changes
 

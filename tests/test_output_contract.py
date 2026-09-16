@@ -35,8 +35,8 @@ class OutputContractTests(unittest.TestCase):
         self.assertEqual(
             result.content,
             (
-                b'\xef\xbb\xbfunique_id\tword\tdefinition\r\n'
-                b"'0001\t\"alpha \"\"beta\"\"\"\tfirst second\r\n"
+                b'\xef\xbb\xbfunique_id\tword\tdefinition\timage\r\n'
+                b"'0001\t\"alpha \"\"beta\"\"\"\tfirst second\tNA\r\n"
             ),
         )
         self.assertNotIn(b"\n", result.content.replace(b"\r\n", b""))

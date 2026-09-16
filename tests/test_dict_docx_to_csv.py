@@ -70,7 +70,9 @@ class ConverterTests(unittest.TestCase):
             "terms.docx",
         )
 
-        self.assertEqual(result.columns, ("unique_id", "word", "definition"))
+        self.assertEqual(
+            result.columns, ("unique_id", "word", "definition", "image")
+        )
         self.assertEqual(result.filename, "terms.csv")
         self.assertEqual(result.row_count, 2)
         rows = decode_tsv(result.content)
@@ -80,6 +82,7 @@ class ConverterTests(unittest.TestCase):
                 "unique_id": "'0001",
                 "word": "abate",
                 "definition": "become less intense",
+                "image": "NA",
             },
         )
         self.assertEqual(rows[1]["unique_id"], "'0002")
@@ -98,7 +101,7 @@ class ConverterTests(unittest.TestCase):
         payload = rows[0]["image"].split(",", 1)[1]
         with Image.open(io.BytesIO(base64.b64decode(payload))) as image:
             self.assertEqual(image.format, "WEBP")
-        self.assertEqual(rows[1]["image"], "")
+        self.assertEqual(rows[1]["image"], "NA")
 
     def test_ignores_text_in_an_image_cell_without_an_embedded_image(self):
         document = Document()
@@ -114,7 +117,7 @@ class ConverterTests(unittest.TestCase):
         stream.seek(0)
 
         rows = decode_tsv(convert_dictionary_docx_to_csv(stream).content)
-        self.assertEqual(rows[0]["image"], "")
+        self.assertEqual(rows[0]["image"], "NA")
 
     def test_rejects_an_image_that_cannot_be_converted_to_webp(self):
         with patch(
