@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import BinaryIO, Iterable
 
 from docx import Document
+from docx.document import Document as DocumentType
 from docx.opc.exceptions import PackageNotFoundError
 from docx.table import Table, _Cell
 from PIL import Image, ImageOps, UnidentifiedImageError
@@ -129,7 +130,7 @@ def image_to_data_uri(cell: _Cell, quality: int = DEFAULT_IMAGE_QUALITY) -> str:
         ) from error
 
 
-def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY):
+def extract_rows(document: DocumentType, image_quality: int = DEFAULT_IMAGE_QUALITY):
     """Extract the target columns and data rows from a DOCX document."""
     table, headers = find_dictionary_table(document.tables)
 
