@@ -3,5 +3,5 @@
   "maximum_peak_rss_mb": 256,
   "expected_row_count": 195,
   "expected_image_count": 195,
-  "expected_output_sha256": "1df87c39c83803f9eb8aaf9613620a3c84be1c2978f57ee83686fb43a8767afb"
+  "expected_output_sha256": "313789caa65a1154a71dac154a95278295a68f96cdc246e25164958f69b26383"
 }

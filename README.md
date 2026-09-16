@@ -13,6 +13,10 @@ The engine selects the best top-level table containing these headers
 - `definition` - required
 - `image` - optional
 
+Every exported row also receives a generated `unique_id` in the format
+`0001`, `0002`, and so on. The identifier is the first output column and is
+assigned after empty rows are removed.
+
 When the `image` header is present, the first image in each cell is converted
 to a WebP data URI whose value starts exactly with
 `data:image/webp;base64,`. Empty image cells remain empty, and an image that

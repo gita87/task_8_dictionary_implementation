@@ -40,7 +40,9 @@ class WebTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["X-Row-Count"], "2")
-        self.assertEqual(response.headers["X-CSV-Columns"], "word,definition")
+        self.assertEqual(
+            response.headers["X-CSV-Columns"], "unique_id,word,definition"
+        )
         self.assertIn("kamus.csv", response.headers["Content-Disposition"])
 
     def test_rejects_wrong_extension(self):

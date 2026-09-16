@@ -24,9 +24,11 @@ downstream agreement.
 
 The output columns use lowercase names and this exact order:
 
-1. `word` — required;
-2. `definition` — required; and
-3. `image` — included only when the selected DOCX table contains an `image`
+1. `unique_id` — generated for every emitted row, starting at `0001` and
+   increasing by one with four-digit zero padding;
+2. `word` — required;
+3. `definition` — required; and
+4. `image` — included only when the selected DOCX table contains an `image`
    header.
 
 Every emitted row must contain a non-empty `word` and `definition`. A fully

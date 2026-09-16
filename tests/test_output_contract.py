@@ -35,8 +35,8 @@ class OutputContractTests(unittest.TestCase):
         self.assertEqual(
             result.content,
             (
-                b'\xef\xbb\xbfword\tdefinition\r\n'
-                b'"alpha ""beta"""\tfirst second\r\n'
+                b'\xef\xbb\xbfunique_id\tword\tdefinition\r\n'
+                b'0001\t"alpha ""beta"""\tfirst second\r\n'
             ),
         )
         self.assertNotIn(b"\n", result.content.replace(b"\r\n", b""))
@@ -52,9 +52,11 @@ class OutputContractTests(unittest.TestCase):
 
         result = convert_dictionary_docx_to_csv(save_document(document))
 
-        self.assertEqual(result.columns, ("word", "definition", "image"))
+        self.assertEqual(
+            result.columns, ("unique_id", "word", "definition", "image")
+        )
         header = result.content.decode("utf-8-sig").split("\r\n", 1)[0]
-        self.assertEqual(header, "word\tdefinition\timage")
+        self.assertEqual(header, "unique_id\tword\tdefinition\timage")
 
     def test_image_value_is_a_raw_webp_data_uri_without_html(self):
         result = convert_dictionary_docx_to_csv(make_docx(True), "terms.docx")
@@ -92,6 +94,12 @@ class OutputContractTests(unittest.TestCase):
         result = convert_dictionary_docx_to_csv(save_document(document))
 
         self.assertEqual(result.row_count, 1)
+        rows = list(
+            csv.DictReader(
+                io.StringIO(result.content.decode("utf-8-sig")), delimiter="\t"
+            )
+        )
+        self.assertEqual(rows[0]["unique_id"], "0001")
 
 
 if __name__ == "__main__":

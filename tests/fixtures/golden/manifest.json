@@ -1,5 +1,5 @@
 {
-  "contract_version": "1.0",
+  "contract_version": "1.1",
   "approval_status": "approved",
   "approved_by": "project owner",
   "approved_at": "2026-08-29",
@@ -7,12 +7,13 @@
   "input_file": "production_dictionary.docx",
   "expected_output_file": "production_dictionary.expected.csv",
   "input_size_bytes": 23857996,
-  "expected_output_size_bytes": 16593292,
+  "expected_output_size_bytes": 16594277,
   "input_sha256": "0ea4061dc937abb7f1cf2f1b2da316e2ec3d22ebd7d36b72250f2249756bd2ae",
-  "expected_output_sha256": "1df87c39c83803f9eb8aaf9613620a3c84be1c2978f57ee83686fb43a8767afb",
+  "expected_output_sha256": "313789caa65a1154a71dac154a95278295a68f96cdc246e25164958f69b26383",
   "expected_row_count": 195,
   "expected_image_count": 195,
   "expected_columns": [
+    "unique_id",
     "word",
     "definition",
     "image"

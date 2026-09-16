@@ -70,11 +70,19 @@ class ConverterTests(unittest.TestCase):
             "terms.docx",
         )
 
-        self.assertEqual(result.columns, ("word", "definition"))
+        self.assertEqual(result.columns, ("unique_id", "word", "definition"))
         self.assertEqual(result.filename, "terms.csv")
         self.assertEqual(result.row_count, 2)
         rows = decode_tsv(result.content)
-        self.assertEqual(rows[0], {"word": "abate", "definition": "become less intense"})
+        self.assertEqual(
+            rows[0],
+            {
+                "unique_id": "0001",
+                "word": "abate",
+                "definition": "become less intense",
+            },
+        )
+        self.assertEqual(rows[1]["unique_id"], "0002")
         self.assertEqual(rows[1]["definition"], "active and energetic")
         self.assertTrue(result.content.startswith(b"\xef\xbb\xbf"))
         self.assertIn(b"\r\n", result.content)
@@ -82,7 +90,9 @@ class ConverterTests(unittest.TestCase):
     def test_adapts_to_image_column_and_emits_webp(self):
         result = convert_dictionary_docx_to_csv(make_docx(True), "terms.docx")
 
-        self.assertEqual(result.columns, ("word", "definition", "image"))
+        self.assertEqual(
+            result.columns, ("unique_id", "word", "definition", "image")
+        )
         rows = decode_tsv(result.content)
         self.assertTrue(rows[0]["image"].startswith(WEBP_DATA_URI_PREFIX))
         payload = rows[0]["image"].split(",", 1)[1]

@@ -19,6 +19,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 
 REQUIRED_HEADERS = ("word", "definition")
 OPTIONAL_HEADERS = ("image",)
+GENERATED_HEADERS = ("unique_id",)
 WEBP_DATA_URI_PREFIX = "data:image/webp;base64,"
 DEFAULT_IMAGE_QUALITY = 75
 MAX_UNCOMPRESSED_DOCX_BYTES = 250 * 1024 * 1024
@@ -136,7 +137,11 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
     if has_image:
         column_indexes["image"] = headers.index("image")
 
-    columns = tuple(REQUIRED_HEADERS + OPTIONAL_HEADERS if has_image else REQUIRED_HEADERS)
+    columns = tuple(
+        GENERATED_HEADERS
+        + REQUIRED_HEADERS
+        + (OPTIONAL_HEADERS if has_image else ())
+    )
     rows: list[dict[str, str]] = []
 
     for row_number, table_row in enumerate(table.rows[1:], start=2):
@@ -168,6 +173,7 @@ def extract_rows(document: Document, image_quality: int = DEFAULT_IMAGE_QUALITY)
                 f"cell(s): {missing}."
             )
 
+        row["unique_id"] = f"{len(rows) + 1:04d}"
         rows.append(row)
 
     return columns, rows
