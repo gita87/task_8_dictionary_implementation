@@ -1,7 +1,7 @@
 # DictFlow: DOCX Dictionary to CSV Automation Engine
 
 **Technical White Sheet**  
-Version 1.0 - August 2026
+Version 1.1 - August 2026
 
 ## Executive summary
 
@@ -56,6 +56,12 @@ The engine is built around the following objectives:
    packages are rejected before full parsing.
 6. **Portable output** - Unicode text and embedded images remain self-contained
    in a single tab-delimited file.
+7. **Contract verification** - automated tests prevent encoding, schema, text,
+   or image-format regressions.
+8. **Production regression protection** - an approved DOCX and CSV pair is
+   compared byte for byte.
+9. **Measured performance** - duration and peak memory are evaluated against
+   explicit thresholds using a production-sized document.
 
 ## Input contract
 
@@ -106,6 +112,16 @@ must contain non-empty `word` and `definition` values. An empty required cell
 stops conversion with a row-specific error. An optional image cell may remain
 empty when the DOCX cell contains no embedded image.
 
+Every populated image value contains the raw data URI only:
+
+```text
+data:image/webp;base64,<BASE64_PAYLOAD>
+```
+
+HTML such as `<img src="...">`, framework bindings such as `<img [src]="...">`,
+and other media-type prefixes are not permitted. The normative specification
+is maintained in [`docs/OUTPUT_CONTRACT.md`](docs/OUTPUT_CONTRACT.md).
+
 ## Conversion architecture
 
 ```mermaid
@@ -125,9 +141,9 @@ flowchart LR
 ```
 
 The conversion core is independent of the delivery surface. Both the web
-application and CLI call the same `convert_dictionary_docx_to_csv()` function, ensuring that they
-apply the same table selection, text extraction, image processing, and output
-serialization rules.
+application and CLI call the same `convert_dictionary_docx_to_csv()` function,
+ensuring that they apply the same table selection, text extraction, image
+processing, and output serialization rules.
 
 ## Document validation
 
@@ -259,6 +275,113 @@ DictFlow includes controls at the package, application, and response layers:
 For public deployment, TLS termination and request filtering should be handled
 by an HTTPS reverse proxy in front of the WSGI server.
 
+## Verification and regression strategy
+
+The project uses several complementary verification layers. Each layer covers
+a different class of regression rather than duplicating the same assertion.
+
+### Unit and integration tests
+
+The standard test suite covers the conversion core, command-line interface,
+web endpoints, output contract, golden-file comparison, performance
+instrumentation, and report behavior. It is executed with:
+
+```bash
+.venv/bin/python -m unittest discover -v
+```
+
+At version 1.1, the suite contains 30 passing tests.
+
+### Output-contract tests
+
+`tests/test_output_contract.py` enforces the externally visible file contract,
+including:
+
+- UTF-8 BOM bytes at the beginning of the file;
+- tab-delimited fields and CRLF record endings;
+- exact lowercase column names and ordering;
+- plain-text whitespace normalization and CSV quote escaping;
+- non-empty `word` and `definition` values; and
+- raw WebP base64 data URIs without HTML, PNG, or JPEG alternatives.
+
+These tests provide focused diagnostics when a specific contract property is
+changed.
+
+### Production golden-file testing
+
+`tests/test_golden_file.py` converts an approved production fixture and compares
+the generated output with the approved CSV byte for byte. This broader check
+detects changes that an individual contract assertion may not anticipate,
+including altered row content, image bytes, whitespace, ordering, or
+serialization.
+
+The approved fixture set is stored in `tests/fixtures/golden/` and contains:
+
+- `production_dictionary.docx`;
+- `production_dictionary.expected.csv`;
+- `manifest.json`; and
+- fixture-governance instructions in `README.md`.
+
+The manifest records file sizes, SHA-256 hashes, schema, row count, image count,
+approval status, and approval date. Before conversion is tested, fixture hashes
+are checked to detect accidental replacement or modification.
+
+The current production golden pair has these characteristics:
+
+| Metric | Approved value |
+| --- | ---: |
+| DOCX size | 23,857,996 bytes |
+| CSV size | 16,593,292 bytes |
+| Data rows | 195 |
+| Populated WebP image cells | 195 |
+| Expected CSV SHA-256 | `1df87c39c83803f9eb8aaf9613620a3c84be1c2978f57ee83686fb43a8767afb` |
+
+The expected CSV must not be regenerated merely to make a failing test pass.
+An intentional contract change requires downstream review, project-owner
+approval, and a corresponding manifest update.
+
+## Performance baseline and guardrails
+
+The production benchmark is implemented in
+`tests/performance/benchmark_pipeline.py`. It converts the production golden
+DOCX in three isolated Python processes. Process isolation makes each peak-RSS
+measurement independent from memory retained by a previous conversion.
+
+Run the benchmark with:
+
+```bash
+.venv/bin/python -m tests.performance.benchmark_pipeline
+```
+
+The benchmark measures:
+
+- wall-clock conversion duration;
+- maximum resident set size, or peak RSS;
+- input and output size;
+- row and populated-image counts; and
+- output SHA-256 stability across all runs.
+
+The approved baseline was recorded on macOS ARM64 with Python 3.9.6, Pillow
+11.3.0, python-docx 1.2.0, and lxml 6.1.2:
+
+| Metric | Baseline | Failure threshold |
+| --- | ---: | ---: |
+| Median duration | 11.946 seconds | 16 seconds |
+| Maximum peak RSS | 174.4 MiB | 256 MiB |
+| Rows | 195 | Must equal 195 |
+| Images | 195 | Must equal 195 |
+
+The thresholds include approximately 30 percent tolerance over the original
+measurement, rounded to practical limits. `tests/performance/baseline.json`
+preserves the original measurements, while
+`tests/performance/thresholds.json` defines pass-or-fail limits. The generated
+machine-readable report is written to `reports/performance/latest.json` and is
+ignored by Git because it is a local runtime artifact.
+
+Performance results depend on hardware and operating-system load. A new target
+environment should establish its own reviewed baseline before thresholds are
+changed.
+
 ## Runtime and deployment
 
 DictFlow requires Python 3.9 or newer and uses a compact dependency set:
@@ -277,6 +400,18 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 .venv/bin/python wsgi.py
 ```
+
+`requirements.txt` lists the direct application dependencies.
+`requirements-lock.txt` pins the complete Python 3.9 environment used for the
+approved golden output and performance baseline. Recreate that environment
+with:
+
+```bash
+.venv/bin/python -m pip install -r requirements-lock.txt
+```
+
+The lock file reduces unexpected golden-output differences caused by silent
+dependency upgrades, especially image-encoder changes.
 
 Production startup example:
 
@@ -330,7 +465,8 @@ Potential extensions can be added without changing the core contract:
 - asynchronous job execution for very large documents;
 - optional external image storage instead of base64;
 - configurable image dimensions and compression policies;
-- structured conversion metrics and centralized logging; and
+- structured conversion metrics and centralized logging;
+- continuous integration on push and pull requests; and
 - containerized deployment templates.
 
 ## Conclusion

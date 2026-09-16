@@ -77,12 +77,12 @@ class ConverterTests(unittest.TestCase):
         self.assertEqual(
             rows[0],
             {
-                "unique_id": "0001",
+                "unique_id": "'0001",
                 "word": "abate",
                 "definition": "become less intense",
             },
         )
-        self.assertEqual(rows[1]["unique_id"], "0002")
+        self.assertEqual(rows[1]["unique_id"], "'0002")
         self.assertEqual(rows[1]["definition"], "active and energetic")
         self.assertTrue(result.content.startswith(b"\xef\xbb\xbf"))
         self.assertIn(b"\r\n", result.content)

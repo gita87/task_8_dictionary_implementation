@@ -25,7 +25,9 @@ downstream agreement.
 The output columns use lowercase names and this exact order:
 
 1. `unique_id` — generated for every emitted row, starting at `0001` and
-   increasing by one with four-digit zero padding;
+   increasing by one with four-digit zero padding. The CSV serialization uses
+   Excel's leading-apostrophe text marker so spreadsheet applications retain
+   the leading zeroes;
 2. `word` — required;
 3. `definition` — required; and
 4. `image` — included only when the selected DOCX table contains an `image`

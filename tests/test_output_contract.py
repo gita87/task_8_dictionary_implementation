@@ -36,7 +36,7 @@ class OutputContractTests(unittest.TestCase):
             result.content,
             (
                 b'\xef\xbb\xbfunique_id\tword\tdefinition\r\n'
-                b'0001\t"alpha ""beta"""\tfirst second\r\n'
+                b"'0001\t\"alpha \"\"beta\"\"\"\tfirst second\r\n"
             ),
         )
         self.assertNotIn(b"\n", result.content.replace(b"\r\n", b""))
@@ -99,7 +99,7 @@ class OutputContractTests(unittest.TestCase):
                 io.StringIO(result.content.decode("utf-8-sig")), delimiter="\t"
             )
         )
-        self.assertEqual(rows[0]["unique_id"], "0001")
+        self.assertEqual(rows[0]["unique_id"], "'0001")
 
 
 if __name__ == "__main__":

@@ -3,6 +3,9 @@
 Launcher ini menjalankan server lokal DictFlow melalui double-click dan membuka
 browser default ke `http://127.0.0.1:8000`.
 
+Pada macOS, launcher menggunakan perintah native `open` untuk membuka browser
+default setelah server siap.
+
 ## Windows
 
 Double-click [`windows/DictFlow.bat`](windows/DictFlow.bat). Jika virtual

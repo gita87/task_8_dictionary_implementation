@@ -3,10 +3,10 @@
   "iterations": 3,
   "input_file": "production_dictionary.docx",
   "input_size_bytes": 23857996,
-  "output_size_bytes": 16594277,
+  "output_size_bytes": 16594472,
   "row_count": 195,
   "image_count": 195,
-  "output_sha256": "313789caa65a1154a71dac154a95278295a68f96cdc246e25164958f69b26383",
+  "output_sha256": "61e49b8209e21ad57b011ba0b597971105672c391882afbb4e4bf497804ba597",
   "duration_seconds": {
     "minimum": 11.843376,
     "median": 11.946409,

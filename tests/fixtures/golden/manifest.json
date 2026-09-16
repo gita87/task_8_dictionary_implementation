@@ -7,9 +7,9 @@
   "input_file": "production_dictionary.docx",
   "expected_output_file": "production_dictionary.expected.csv",
   "input_size_bytes": 23857996,
-  "expected_output_size_bytes": 16594277,
+  "expected_output_size_bytes": 16594472,
   "input_sha256": "0ea4061dc937abb7f1cf2f1b2da316e2ec3d22ebd7d36b72250f2249756bd2ae",
-  "expected_output_sha256": "313789caa65a1154a71dac154a95278295a68f96cdc246e25164958f69b26383",
+  "expected_output_sha256": "61e49b8209e21ad57b011ba0b597971105672c391882afbb4e4bf497804ba597",
   "expected_row_count": 195,
   "expected_image_count": 195,
   "expected_columns": [

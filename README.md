@@ -15,7 +15,8 @@ The engine selects the best top-level table containing these headers
 
 Every exported row also receives a generated `unique_id` in the format
 `0001`, `0002`, and so on. The identifier is the first output column and is
-assigned after empty rows are removed.
+assigned after empty rows are removed. The CSV includes Excel's text marker
+for this column so Excel preserves the leading zeroes when opening the file.
 
 When the `image` header is present, the first image in each cell is converted
 to a WebP data URI whose value starts exactly with

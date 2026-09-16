@@ -192,6 +192,15 @@ def rows_to_csv(columns: tuple[str, ...], rows: list[dict[str, str]]) -> bytes:
         doublequote=True,
     )
     writer.writeheader()
+    # Excel auto-converts zero-padded numeric-looking values such as 0001 to
+    # the integer 1 when opening a CSV. A leading apostrophe is Excel's text
+    # marker: it is hidden in the cell display while preserving the value as
+    # text and therefore retaining the leading zeroes.
+    if "unique_id" in columns:
+        rows = [
+            {**row, "unique_id": f"'{row['unique_id']}"}
+            for row in rows
+        ]
     writer.writerows(rows)
     return output.getvalue().encode("utf-8-sig")
 
