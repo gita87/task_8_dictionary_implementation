@@ -11,7 +11,7 @@ from docx.enum.text import WD_COLOR_INDEX
 from docx.shared import Inches
 from PIL import Image
 
-from dict_docx_to_csv import (
+from qaos_dictionary import (
     ConversionError,
     WEBP_DATA_URI_PREFIX,
     convert_dictionary_docx_to_csv,
@@ -121,7 +121,7 @@ class ConverterTests(unittest.TestCase):
 
     def test_rejects_an_image_that_cannot_be_converted_to_webp(self):
         with patch(
-            "dict_docx_to_csv._first_image_blob",
+            "qaos_dictionary.core._first_image_blob",
             return_value=(b"not-an-image", "image/png"),
         ):
             with self.assertRaisesRegex(ConversionError, "required WebP"):

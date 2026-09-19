@@ -43,6 +43,7 @@ class WebTests(unittest.TestCase):
         self.assertEqual(
             response.headers["X-CSV-Columns"], "unique_id,word,definition,image"
         )
+        self.assertEqual(response.headers["X-Dictionary-Schema"], "dictionary/1.0")
         self.assertIn("kamus.csv", response.headers["Content-Disposition"])
 
     def test_rejects_wrong_extension(self):
@@ -53,6 +54,17 @@ class WebTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertIn(".docx", response.json["error"])
+
+    def test_returns_structured_conversion_diagnostic(self):
+        response = self.client.post(
+            "/convert",
+            data={"document": (io.BytesIO(b"invalid"), "invalid.docx")},
+            content_type="multipart/form-data",
+        )
+
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json["error"]["code"], "invalid_docx_zip")
+        self.assertEqual(response.json["error"]["severity"], "error")
 
 
 if __name__ == "__main__":

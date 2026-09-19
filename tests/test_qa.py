@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from app import create_app
-from dict_docx_to_csv import (
+from qaos_dictionary import (
     ConversionResult,
     convert_dictionary_docx_to_csv,
     rows_to_csv,

@@ -16,6 +16,13 @@ if exist ".venv\Scripts\python.exe" (
     )
 )
 
+"%PYTHON%" -c "import sys; raise SystemExit(not (sys.version_info.major == 3 and sys.version_info.minor in (11, 12, 13)))"
+if errorlevel 1 (
+    echo DictFlow requires Python 3.11 through 3.13.
+    pause
+    exit /b 1
+)
+
 echo Starting DictFlow...
 "%PYTHON%" wsgi.py
 

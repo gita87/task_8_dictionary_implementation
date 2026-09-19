@@ -7,6 +7,8 @@ import os
 from flask import Flask, jsonify, request
 from werkzeug.exceptions import RequestEntityTooLarge
 
+from qaos_dictionary import MAX_UPLOAD_BYTES
+
 from .qa_web import qa_web
 from .web import web
 
@@ -14,7 +16,7 @@ from .web import web
 def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__)
     app.config.from_mapping(
-        MAX_CONTENT_LENGTH=int(os.getenv("MAX_UPLOAD_BYTES", 25 * 1024 * 1024)),
+        MAX_CONTENT_LENGTH=int(os.getenv("MAX_UPLOAD_BYTES", MAX_UPLOAD_BYTES)),
         SEND_FILE_MAX_AGE_DEFAULT=0,
         TEMPLATES_AUTO_RELOAD=True,
     )

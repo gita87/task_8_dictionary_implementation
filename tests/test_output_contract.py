@@ -6,7 +6,7 @@ import unittest
 
 from docx import Document
 
-from dict_docx_to_csv import (
+from qaos_dictionary import (
     ConversionError,
     WEBP_DATA_URI_PREFIX,
     convert_dictionary_docx_to_csv,

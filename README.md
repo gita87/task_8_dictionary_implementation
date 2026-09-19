@@ -6,6 +6,9 @@ run notebook code or individual conversion commands.
 
 ## Input and output contract
 
+The shared schema identifier is `dictionary/1.0`, with the exact columns
+`unique_id`, `word`, `definition`, and `image`.
+
 The engine selects the best top-level table containing these headers
 (case-insensitive):
 
@@ -34,16 +37,16 @@ The complete mandatory contract is documented in
 
 ## Run locally
 
-Prerequisite: Python 3.9 or newer.
+Prerequisite: Python 3.11, 3.12, or 3.13.
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python -m pip install ".[ui]"
 .venv/bin/python wsgi.py
 ```
 
-For the reproducible environment used by golden and performance verification,
-install `requirements-lock.txt` instead of the shorter direct-dependency file.
+Install `.[dev,ui]` when running the test suite. `requirements.txt` remains as
+a compatibility entry point, while `pyproject.toml` is authoritative.
 
 The default browser opens `http://127.0.0.1:8000` automatically. If the
 operating system cannot open it, visit the same address manually.
@@ -84,16 +87,13 @@ Launcher menjalankan server lokal dan membuka browser default ke
 
 ## Integrate with another Python system
 
-Import the conversion pipeline directly from its project-specific module:
+Import the framework-independent conversion pipeline from its package. It
+accepts a path, bytes, or a binary stream:
 
 ```python
-from dict_docx_to_csv import convert_dictionary_docx_to_csv
+from qaos_dictionary import convert_dictionary_docx
 
-with open("input.docx", "rb") as source:
-    result = convert_dictionary_docx_to_csv(
-        source,
-        input_filename="input.docx",
-    )
+result = convert_dictionary_docx("input.docx")
 
 with open(result.filename, "wb") as output:
     output.write(result.content)
@@ -120,14 +120,15 @@ Use a WSGI server and adjust the worker count to match the host capacity:
 .venv/bin/gunicorn --workers 2 --bind 0.0.0.0:8000 --access-logfile - wsgi:app
 ```
 
-The default upload limit is 25 MB. Change it with the `MAX_UPLOAD_BYTES`
-environment variable when necessary. Place an HTTPS reverse proxy in front of
-Gunicorn for a public deployment.
+The shared defaults are a 256 MiB upload limit, 64 MiB per-cell/image limit,
+and 512 MiB output limit. The Flask upload limit may be overridden with the
+`MAX_UPLOAD_BYTES` environment variable. Place an HTTPS reverse proxy in front
+of Gunicorn for a public deployment.
 
 ## Test
 
 ```bash
-.venv/bin/python -m unittest discover -v
+.venv/bin/python -m pytest
 ```
 
 ## Sandbox notebook

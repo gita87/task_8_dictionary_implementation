@@ -5,7 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
-from dict_docx_to_csv import convert_dictionary_docx_to_csv
+from qaos_dictionary import convert_dictionary_docx_to_csv
 
 
 GOLDEN_DIRECTORY = Path(__file__).parent / "fixtures" / "golden"

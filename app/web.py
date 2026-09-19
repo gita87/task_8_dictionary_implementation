@@ -7,7 +7,7 @@ import io
 from flask import Blueprint, jsonify, render_template, request, send_file
 from werkzeug.utils import secure_filename
 
-from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
+from qaos_dictionary import ConversionError, convert_dictionary_docx
 
 
 web = Blueprint("web", __name__)
@@ -34,12 +34,12 @@ def convert():
         return jsonify(error="The file must use the .docx format."), 400
 
     try:
-        result = convert_dictionary_docx_to_csv(
+        result = convert_dictionary_docx(
             upload.stream,
             input_filename=safe_name,
         )
     except ConversionError as error:
-        return jsonify(error=str(error)), 422
+        return jsonify(error=error.as_dict()), 422
 
     response = send_file(
         io.BytesIO(result.content),
@@ -50,5 +50,6 @@ def convert():
     )
     response.headers["X-Row-Count"] = str(result.row_count)
     response.headers["X-CSV-Columns"] = ",".join(result.columns)
+    response.headers["X-Dictionary-Schema"] = result.schema_version
     response.headers["Cache-Control"] = "no-store"
     return response

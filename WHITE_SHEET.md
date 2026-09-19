@@ -361,13 +361,14 @@ The benchmark measures:
 - row and populated-image counts; and
 - output SHA-256 stability across all runs.
 
-The approved baseline was recorded on macOS ARM64 with Python 3.9.6, Pillow
-11.3.0, python-docx 1.2.0, and lxml 6.1.2:
+The historical baseline was recorded on macOS ARM64. The current approved
+baseline is regenerated with Python 3.11 and Pillow 12.3; exact environment
+metadata is stored in `tests/performance/baseline.json`:
 
 | Metric | Baseline | Failure threshold |
 | --- | ---: | ---: |
-| Median duration | 11.946 seconds | 16 seconds |
-| Maximum peak RSS | 174.4 MiB | 256 MiB |
+| Median duration | 11.523 seconds | 16 seconds |
+| Maximum peak RSS | 205.3 MiB | 256 MiB |
 | Rows | 195 | Must equal 195 |
 | Images | 195 | Must equal 195 |
 
@@ -384,7 +385,7 @@ changed.
 
 ## Runtime and deployment
 
-DictFlow requires Python 3.9 or newer and uses a compact dependency set:
+DictFlow requires Python 3.11 through 3.13 and uses a compact dependency set:
 
 | Dependency | Responsibility |
 | --- | --- |
@@ -396,15 +397,15 @@ DictFlow requires Python 3.9 or newer and uses a compact dependency set:
 Local startup:
 
 ```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
+python3.11 -m venv .venv
+.venv/bin/python -m pip install ".[ui]"
 .venv/bin/python wsgi.py
 ```
 
-`requirements.txt` lists the direct application dependencies.
-`requirements-lock.txt` pins the complete Python 3.9 environment used for the
-approved golden output and performance baseline. Recreate that environment
-with:
+`pyproject.toml` defines the core, UI, and development dependency groups.
+`requirements.txt` remains a compatibility installation entry point, while
+`requirements-lock.txt` records a reproducible Python 3.11 environment.
+Recreate the UI environment with:
 
 ```bash
 .venv/bin/python -m pip install -r requirements-lock.txt

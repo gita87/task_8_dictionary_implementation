@@ -14,7 +14,7 @@ from typing import Optional, Sequence
 
 import resource
 
-from dict_docx_to_csv import (
+from qaos_dictionary import (
     WEBP_DATA_URI_PREFIX,
     convert_dictionary_docx_to_csv,
 )

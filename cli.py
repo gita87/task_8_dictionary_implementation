@@ -10,8 +10,7 @@ import time
 from pathlib import Path
 from typing import Optional, Sequence
 
-from dict_docx_to_csv import ConversionError, convert_dictionary_docx_to_csv
-from app.qa import build_qa_session
+from qaos_dictionary import ConversionError, ProgressEvent, convert_dictionary_docx
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -102,16 +101,27 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     try:
         print(f"[1/3] Converting {input_path.name}...", flush=True)
         started_at = time.perf_counter()
-        with input_path.open("rb") as source:
-            result = convert_dictionary_docx_to_csv(
-                source,
-                input_filename=input_path.name,
-                image_quality=args.image_quality,
-            )
+        last_progress = -1
+
+        def report_progress(event: ProgressEvent) -> None:
+            nonlocal last_progress
+            if event.stage == "extract" and event.total:
+                percent = event.completed * 100 // event.total
+                if percent >= last_progress + 10 or percent == 100:
+                    last_progress = percent
+                    print(f"      {percent}% rows processed", flush=True)
+
+        result = convert_dictionary_docx(
+            input_path,
+            image_quality=args.image_quality,
+            progress_callback=report_progress,
+        )
         duration_seconds = time.perf_counter() - started_at
         write_atomic(output_path, result.content)
         qa_session = None
         if args.qa:
+            from app.qa import build_qa_session
+
             print("[2/3] Running QA checks...", flush=True)
             qa_session = build_qa_session(
                 input_path,
@@ -120,8 +130,14 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 duration_seconds,
             )
     except ConversionError as error:
-        print(f"Conversion failed: {error}", file=sys.stderr)
+        print(
+            f"Conversion failed [{error.diagnostic.code}]: {error}",
+            file=sys.stderr,
+        )
         return 1
+    except KeyboardInterrupt:
+        print("Conversion cancelled by user.", file=sys.stderr)
+        return 130
     except OSError as error:
         print(f"File operation failed: {error}", file=sys.stderr)
         return 1

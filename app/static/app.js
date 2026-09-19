@@ -32,7 +32,8 @@ async function convertSelectedFile() {
 
     if (!response.ok) {
       const body = await response.json().catch(() => ({}));
-      throw new Error(body.error || "Conversion failed. Please check the document.");
+      const detail = typeof body.error === "object" ? body.error.message : body.error;
+      throw new Error(detail || "Conversion failed. Please check the document.");
     }
 
     const blob = await response.blob();

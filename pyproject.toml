@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qaos-dictionary"
+version = "1.0.0"
+description = "QAOS dictionary/1.0 DOCX-to-CSV conversion library"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+  "Pillow>=12.3,<13",
+  "lxml>=5,<7",
+  "python-docx>=1.1,<2",
+]
+
+[project.optional-dependencies]
+ui = [
+  "Flask>=3.1,<4",
+  "gunicorn>=23,<24",
+]
+dev = [
+  "pytest>=8,<10",
+  "pytest-cov>=5,<8",
+]
+
+[project.scripts]
+qaos-dictionary = "cli:main"
+
+[tool.setuptools]
+py-modules = ["cli", "dict_docx_to_csv", "wsgi"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["qaos_dictionary*", "app*"]
+
+[tool.setuptools.package-data]
+app = ["templates/*.html", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

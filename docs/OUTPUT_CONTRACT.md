@@ -5,6 +5,8 @@
 This contract is mandatory for every output produced by the dictionary and
 vocabulary DOCX conversion pipeline.
 
+The schema identifier is `dictionary/1.0`.
+
 ## File format
 
 | Property | Required value |
@@ -69,6 +71,28 @@ PNG, JPEG, GIF, SVG, and other media-type prefixes are not permitted in the
 CSV. Every embedded source image is converted to WebP. If conversion to WebP
 fails, the complete DOCX conversion fails rather than emitting a fallback
 format. Missing images are represented by the literal string `NA`.
+
+Accepted embedded source MIME types are `image/bmp`, `image/gif`, `image/jpeg`,
+`image/png`, `image/tiff`, and `image/webp`. Their decoded format is verified
+and must match the declared MIME type before conversion. Regardless of source format, a populated output value is
+always a WebP data URI; JPEG and PNG data URIs are never emitted.
+
+## Capacity limits
+
+| Limit | Bytes |
+| --- | ---: |
+| Input/upload | 268435456 (256 MiB) |
+| Individual text/image cell | 67108864 (64 MiB) |
+| Generated output | 536870912 (512 MiB) |
+
+Exceeding a limit stops conversion with a structured diagnostic.
+
+## Library behavior
+
+The core API accepts filesystem paths, byte strings, and binary streams. It
+returns bytes and never modifies the input. Optional progress, cooperative
+cancellation, and periodic checkpoint callbacks are part of the public API.
+Failures expose a stable diagnostic code, message, severity, and context.
 
 ## Compatibility changes
 

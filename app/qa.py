@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Mapping, Sequence
 
-from dict_docx_to_csv import ConversionResult, WEBP_DATA_URI_PREFIX
+from qaos_dictionary import ConversionResult, WEBP_DATA_URI_PREFIX
 
 
 PASS = "pass"

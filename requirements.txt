@@ -1,5 +1,6 @@
-Flask==3.1.2
-gunicorn==23.0.0
-python-docx==1.2.0
-Pillow==11.3.0
-pandas==2.3.3
+# Compatibility install file. Prefer: pip install .[ui]
+Pillow>=12.3,<13
+lxml>=5,<7
+python-docx>=1.1,<2
+Flask>=3.1,<4
+gunicorn>=23,<24

@@ -11,7 +11,13 @@ else
 fi
 
 if [[ -z "$PYTHON" ]]; then
-    echo "DictFlow membutuhkan Python 3.9 atau lebih baru."
+    echo "DictFlow membutuhkan Python 3.11 hingga 3.13."
+    read -r "?Tekan Enter untuk menutup..."
+    exit 1
+fi
+
+if ! "$PYTHON" -c 'import sys; raise SystemExit(not ((3, 11) <= sys.version_info[:2] < (3, 14)))'; then
+    echo "DictFlow membutuhkan Python 3.11 hingga 3.13."
     read -r "?Tekan Enter untuk menutup..."
     exit 1
 fi
