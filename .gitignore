@@ -22,3 +22,7 @@ output/
 
 # Local benchmark reports are generated artifacts.
 reports/performance/*.json
+.ruff_cache/
+.mypy_cache/
+reports/coverage.xml
+reports/security/

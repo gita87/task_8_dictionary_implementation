@@ -5,26 +5,26 @@ from __future__ import annotations
 import io
 
 from flask import Blueprint, jsonify, render_template, request, send_file
+from flask.typing import ResponseReturnValue
 from werkzeug.utils import secure_filename
 
 from qaos_dictionary import ConversionError, convert_dictionary_docx
-
 
 web = Blueprint("web", __name__)
 
 
 @web.get("/")
-def index():
+def index() -> str:
     return render_template("index.html")
 
 
 @web.get("/health")
-def health():
+def health() -> ResponseReturnValue:
     return jsonify(status="ok")
 
 
 @web.post("/convert")
-def convert():
+def convert() -> ResponseReturnValue:
     upload = request.files.get("document")
     if upload is None or not upload.filename:
         return jsonify(error="Select a DOCX file first."), 400

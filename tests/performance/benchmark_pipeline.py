@@ -4,21 +4,19 @@ import argparse
 import hashlib
 import json
 import platform
+import resource
 import statistics
 import subprocess
 import sys
 import time
+from collections.abc import Sequence
 from importlib.metadata import version
 from pathlib import Path
-from typing import Optional, Sequence
-
-import resource
 
 from qaos_dictionary import (
     WEBP_DATA_URI_PREFIX,
     convert_dictionary_docx_to_csv,
 )
-
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 GOLDEN_DIRECTORY = PROJECT_ROOT / "tests" / "fixtures" / "golden"
@@ -161,7 +159,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     input_path = args.input.expanduser().resolve()
 

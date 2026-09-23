@@ -6,19 +6,19 @@ import csv
 import hashlib
 import math
 import re
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Mapping, Sequence
 
 from qaos_common.csvio import CSVReader, DictionaryCSVProfile
 from qaos_common.errors import QAOSCommonError
 from qaos_common.limits import DEFAULT_LIMITS
 from qaos_common.rich_content import validate_image_data_uri
 
-from qaos_dictionary import ConversionResult, WEBP_DATA_URI_PREFIX
+from qaos_dictionary import WEBP_DATA_URI_PREFIX, ConversionResult
 
-
-PASS = "pass"
+# QA status label, not a credential.
+PASS = "pass"  # nosec B105
 WARNING = "warning"
 FAIL = "fail"
 _RICH_TEXT_TAG = re.compile(

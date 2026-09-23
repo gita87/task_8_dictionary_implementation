@@ -1,20 +1,84 @@
-name: test
-
+name: quality
 on:
   push:
   pull_request:
-
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  unit:
+  checks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ['3.11', '3.12', '3.13']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install --upgrade pip
-      - run: python -m pip install --find-links ./vendor ".[dev,ui]" "Pillow==12.3.0"
-      - run: python -m pytest
+      - run: python scripts/verify_wheel.py
+      - run: python -m pip install -r requirements-lock.txt
+      - run: python -m pip install --no-build-isolation --find-links ./vendor -e '.[dev,ui]'
+      - run: python -m pip check
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy
+      - run: python -m pytest --cov --cov-report=term-missing --cov-report=xml:reports/coverage.xml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: reports/coverage.xml
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/verify_wheel.py
+      - run: python -m pip install -r requirements-lock.txt
+      - run: python -m pip install --no-build-isolation --find-links ./vendor -e '.[dev,ui]'
+      - run: mkdir -p reports/security
+      - run: bandit -r src -f json -o reports/security/bandit.json
+      - run: python scripts/audit_dependencies.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit
+          path: reports/security/
+  performance:
+    # Budget was calibrated on Apple Silicon/macOS; keep it independent of coverage.
+    runs-on: macos-14
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/verify_wheel.py
+      - run: python -m pip install -r requirements-lock.txt
+      - run: python -m pip install --no-build-isolation --find-links ./vendor .
+      - run: python -m tests.performance.benchmark_pipeline --iterations 3
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-budget
+          path: reports/performance/latest.json
+  distribution:
+    needs: [checks, security, performance]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python scripts/verify_wheel.py
+      - run: python -m pip install -r requirements-lock.txt
+      - run: python -m build --no-isolation
+      - run: python -m twine check dist/*.whl dist/*.tar.gz
+      - run: python scripts/clean_install.py
+      - run: python scripts/provenance.py --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: distributions-and-provenance
+          path: dist/

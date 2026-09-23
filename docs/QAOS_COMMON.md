@@ -50,10 +50,13 @@ proyek ini. `completed` menunjukkan konversi bytes selesai, sebelum publikasi CL
 ## Verifikasi
 
 Sebelum migrasi: 38 tes lulus pada Python 3.11/macOS.
-Setelah migrasi: 44 tes lulus; `pip check` dan `git diff --check` bersih.
+Setelah migrasi awal common: 44 tes lulus; `pip check` dan `git diff --check` bersih.
 Import diverifikasi berasal dari `.venv311/lib/python3.11/site-packages/qaos_common`.
 Suite mencakup golden CSV byte-per-byte, CLI/web/QA, dan tes integrasi common:
 round-trip bytes dengan/tanpa gambar, hash dependency, callback, pembatalan,
 ID duplikat, gambar invalid, dan pemulihan batas parser global.
 CI memasang wheel yang sama untuk Python 3.11/3.12/3.13. Eksekusi lokal tidak
 membuktikan hasil pada Windows atau interpreter lain.
+
+Layout paket sekarang berada di `src/qaos_dictionary/`; arsitektur dan gate
+lanjutan didokumentasikan di ARCHITECTURE.md dan RELEASE.md.

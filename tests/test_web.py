@@ -40,9 +40,7 @@ class WebTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.headers["X-Row-Count"], "2")
-        self.assertEqual(
-            response.headers["X-CSV-Columns"], "unique_id,word,definition,image"
-        )
+        self.assertEqual(response.headers["X-CSV-Columns"], "unique_id,word,definition,image")
         self.assertEqual(response.headers["X-Dictionary-Schema"], "dictionary/1.0")
         self.assertIn("kamus.csv", response.headers["Content-Disposition"])
 

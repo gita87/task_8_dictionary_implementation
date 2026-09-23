@@ -57,25 +57,25 @@ class LibraryApiTests(unittest.TestCase):
         self.assertEqual(raised.exception.as_dict()["severity"], "error")
 
     def test_enforces_upload_limit(self):
-        with patch("qaos_dictionary.core.MAX_UPLOAD_BYTES", 2):
+        with patch("qaos_dictionary.source.MAX_UPLOAD_BYTES", 2):
             with self.assertRaises(ConversionError) as upload_error:
                 convert_dictionary_docx(b"123")
         self.assertEqual(upload_error.exception.diagnostic.code, "input_too_large")
 
     def test_enforces_cell_and_output_limits(self):
-        with patch("qaos_dictionary.core.MAX_CELL_BYTES", 3):
+        with patch("qaos_dictionary.images.MAX_CELL_BYTES", 3):
             with self.assertRaises(ConversionError) as cell_error:
                 convert_dictionary_docx(make_docx(False))
         self.assertEqual(cell_error.exception.diagnostic.code, "cell_too_large")
 
-        with patch("qaos_dictionary.core.MAX_OUTPUT_BYTES", 10):
+        with patch("qaos_dictionary.serialization.MAX_OUTPUT_BYTES", 10):
             with self.assertRaises(ConversionError) as output_error:
                 rows_to_csv(("word",), [{"word": "value"}])
         self.assertEqual(output_error.exception.diagnostic.code, "output_too_large")
 
     def test_rejects_unapproved_image_mime(self):
         with patch(
-            "qaos_dictionary.core._first_image_blob",
+            "qaos_dictionary.images._first_image_blob",
             return_value=(b"image", "application/octet-stream"),
         ):
             from qaos_dictionary import image_to_data_uri
@@ -88,7 +88,7 @@ class LibraryApiTests(unittest.TestCase):
         image = io.BytesIO()
         Image.new("RGB", (2, 2)).save(image, "PNG")
         with patch(
-            "qaos_dictionary.core._first_image_blob",
+            "qaos_dictionary.images._first_image_blob",
             return_value=(image.getvalue(), "image/jpeg"),
         ):
             from qaos_dictionary import image_to_data_uri

@@ -10,12 +10,12 @@ from pathlib import Path
 from PIL import Image
 
 from app import create_app
+from app.qa import FAIL, PASS, build_qa_session
 from qaos_dictionary import (
     ConversionResult,
     convert_dictionary_docx_to_csv,
     rows_to_csv,
 )
-from app.qa import FAIL, PASS, build_qa_session
 from tests.test_dict_docx_to_csv import make_docx
 
 
@@ -75,10 +75,11 @@ class QualityAssuranceTests(unittest.TestCase):
             # Real WebP bytes: shared validation checks MIME signatures too.
             image_buffer = io.BytesIO()
             Image.frombytes("RGB", (256, 256), random.Random(0).randbytes(256 * 256 * 3)).save(
-                image_buffer, format="WEBP", lossless=True)
-            image = "data:image/webp;base64," + base64.b64encode(
-                image_buffer.getvalue()
-            ).decode("ascii")
+                image_buffer, format="WEBP", lossless=True
+            )
+            image = "data:image/webp;base64," + base64.b64encode(image_buffer.getvalue()).decode(
+                "ascii"
+            )
             self.assertGreater(len(image), 131_072)
             columns = ("word", "definition", "image")
             content = rows_to_csv(
@@ -96,9 +97,7 @@ class QualityAssuranceTests(unittest.TestCase):
 
             self.assertEqual(session.report.image_count, 1)
             image_check = next(
-                check
-                for check in session.report.checks
-                if check.name == "Adaptive image output"
+                check for check in session.report.checks if check.name == "Adaptive image output"
             )
             self.assertEqual(image_check.status, PASS)
 
@@ -128,9 +127,7 @@ class QualityAssuranceTests(unittest.TestCase):
 
             session = build_qa_session(input_path, output_path, conversion, 0.1)
             image_check = next(
-                check
-                for check in session.report.checks
-                if check.name == "Adaptive image output"
+                check for check in session.report.checks if check.name == "Adaptive image output"
             )
 
             self.assertEqual(image_check.status, FAIL)

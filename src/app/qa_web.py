@@ -5,10 +5,9 @@ from __future__ import annotations
 import io
 import math
 
-from flask import Blueprint, abort, current_app, render_template, request, send_file
+from flask import Blueprint, Response, abort, current_app, render_template, request, send_file
 
 from .qa import QASession
-
 
 qa_web = Blueprint("qa", __name__, url_prefix="/qa")
 ROWS_PER_PAGE = 50
@@ -22,13 +21,13 @@ def _session() -> QASession:
 
 
 @qa_web.get("")
-def report():
+def report() -> str:
     session = _session()
     return render_template("qa_report.html", report=session.report)
 
 
 @qa_web.get("/csv")
-def csv_results():
+def csv_results() -> str:
     session = _session()
     page_count = max(1, math.ceil(len(session.rows) / ROWS_PER_PAGE))
     page = request.args.get("page", default=1, type=int)
@@ -50,7 +49,7 @@ def csv_results():
 
 
 @qa_web.get("/download")
-def download():
+def download() -> Response:
     session = _session()
     response = send_file(
         io.BytesIO(session.conversion.content),
@@ -61,4 +60,3 @@ def download():
     )
     response.headers["Cache-Control"] = "no-store"
     return response
-

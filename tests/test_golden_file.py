@@ -7,7 +7,6 @@ from pathlib import Path
 
 from qaos_dictionary import convert_dictionary_docx_to_csv
 
-
 GOLDEN_DIRECTORY = Path(__file__).parent / "fixtures" / "golden"
 MANIFEST_PATH = GOLDEN_DIRECTORY / "manifest.json"
 
@@ -25,9 +24,7 @@ class ProductionGoldenFileTests(unittest.TestCase):
     def setUpClass(cls):
         cls.manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
         cls.input_path = GOLDEN_DIRECTORY / cls.manifest["input_file"]
-        cls.expected_path = (
-            GOLDEN_DIRECTORY / cls.manifest["expected_output_file"]
-        )
+        cls.expected_path = GOLDEN_DIRECTORY / cls.manifest["expected_output_file"]
 
     def test_fixture_matches_approved_manifest(self):
         self.assertEqual(self.manifest["approval_status"], "approved")

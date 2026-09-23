@@ -28,3 +28,14 @@ Recalibrate without enforcing existing thresholds:
 
 Threshold changes require review. They must not be increased only to hide a
 performance regression.
+
+CI now invokes this command as a blocking job on macos-14, independently of
+coverage instrumentation. The unit suite also verifies that exceeding duration
+or memory by even a small amount fails and that the CLI writes FAILED and exits
+1. The metric-collection smoke test alone is not a regression gate.
+
+The budget remains 16 seconds median over three isolated runs and 256 MiB
+maximum RSS, plus exact row/image counts and output SHA-256. The historical
+baseline remains unchanged; new local measurements are evidence rather than an
+automatic recalibration. This budget catches regressions that cross the limits;
+it does not promise to detect every slowdown below them.

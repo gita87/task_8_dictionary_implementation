@@ -35,4 +35,3 @@ def serve_qa_report(
         pass
     finally:
         server.server_close()
-

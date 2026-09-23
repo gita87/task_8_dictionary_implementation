@@ -7,8 +7,8 @@ import unittest
 from docx import Document
 
 from qaos_dictionary import (
-    ConversionError,
     WEBP_DATA_URI_PREFIX,
+    ConversionError,
     convert_dictionary_docx_to_csv,
 )
 from tests.test_dict_docx_to_csv import make_docx
@@ -35,8 +35,8 @@ class OutputContractTests(unittest.TestCase):
         self.assertEqual(
             result.content,
             (
-                b'\xef\xbb\xbfunique_id\tword\tdefinition\timage\r\n'
-                b"'0001\t\"alpha \"\"beta\"\"\"\tfirst second\tNA\r\n"
+                b"\xef\xbb\xbfunique_id\tword\tdefinition\timage\r\n"
+                b'\'0001\t"alpha ""beta"""\tfirst second\tNA\r\n'
             ),
         )
         self.assertNotIn(b"\n", result.content.replace(b"\r\n", b""))
@@ -52,9 +52,7 @@ class OutputContractTests(unittest.TestCase):
 
         result = convert_dictionary_docx_to_csv(save_document(document))
 
-        self.assertEqual(
-            result.columns, ("unique_id", "word", "definition", "image")
-        )
+        self.assertEqual(result.columns, ("unique_id", "word", "definition", "image"))
         header = result.content.decode("utf-8-sig").split("\r\n", 1)[0]
         self.assertEqual(header, "unique_id\tword\tdefinition\timage")
 
@@ -94,11 +92,7 @@ class OutputContractTests(unittest.TestCase):
         result = convert_dictionary_docx_to_csv(save_document(document))
 
         self.assertEqual(result.row_count, 1)
-        rows = list(
-            csv.DictReader(
-                io.StringIO(result.content.decode("utf-8-sig")), delimiter="\t"
-            )
-        )
+        rows = list(csv.DictReader(io.StringIO(result.content.decode("utf-8-sig")), delimiter="\t"))
         self.assertEqual(rows[0]["unique_id"], "'0001")
 
 

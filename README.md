@@ -170,3 +170,19 @@ limits use `qaos-common==0.2.2`. The exact local release wheel is included in
 `vendor/`; installation must use `--find-links ./vendor` because this dependency
 is distributed locally. See [migration notes](docs/QAOS_COMMON.md) for compatibility
 adapters and verification.
+
+## Engineering gates
+
+Implementation lives in `src/qaos_dictionary/`; use an installed package
+(`pip install --find-links ./vendor -e '.[dev,ui]'`) for development.
+Root CLI launch commands remain available after installation.
+
+- [Architecture](docs/ARCHITECTURE.md) and module responsibilities
+- [Input/API/diagnostics compatibility](docs/COMPATIBILITY.md)
+- [Security audit and controls](docs/SECURITY_AUDIT.md)
+- [Build, clean-install and provenance gates](docs/RELEASE.md)
+
+Ruff, mypy strict, 85% branch coverage, dependency/source audit, and the existing
+performance budgets are enforced by `.github/workflows/test.yml`. Wheels include
+`py.typed`. Distribution checks install both wheel and sdist in fresh environments
+outside the checkout before generating the release provenance manifest.
