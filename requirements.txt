@@ -1,3 +1,5 @@
+--find-links ./vendor
+qaos-common==0.2.2
 # Compatibility install file. Prefer: pip install .[ui]
 Pillow>=12.3,<13
 lxml>=5,<7

@@ -16,5 +16,5 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: python -m pip install --upgrade pip
-      - run: python -m pip install ".[dev,ui]" "Pillow==12.3.0"
+      - run: python -m pip install --find-links ./vendor ".[dev,ui]" "Pillow==12.3.0"
       - run: python -m pytest

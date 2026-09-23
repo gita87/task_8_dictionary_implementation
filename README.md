@@ -41,11 +41,11 @@ Prerequisite: Python 3.11, 3.12, or 3.13.
 
 ```bash
 python3 -m venv .venv
-.venv/bin/python -m pip install ".[ui]"
+.venv/bin/python -m pip install --find-links ./vendor ".[ui]"
 .venv/bin/python wsgi.py
 ```
 
-Install `.[dev,ui]` when running the test suite. `requirements.txt` remains as
+Install with `pip install --find-links ./vendor ".[dev,ui]"` when running the test suite. `requirements.txt` remains as
 a compatibility entry point, while `pyproject.toml` is authoritative.
 
 The default browser opens `http://127.0.0.1:8000` automatically. If the
@@ -162,3 +162,11 @@ The benchmark checks median duration, maximum peak RSS memory, row count, image
 count, and output SHA-256. The generated report is saved as
 `reports/performance/latest.json`. Thresholds and the approved local baseline
 are stored in `tests/performance/`.
+
+## Shared QAOS baseline
+
+The schema, dictionary CSV profile, validation, cancellation token, and processing
+limits use `qaos-common==0.2.2`. The exact local release wheel is included in
+`vendor/`; installation must use `--find-links ./vendor` because this dependency
+is distributed locally. See [migration notes](docs/QAOS_COMMON.md) for compatibility
+adapters and verification.

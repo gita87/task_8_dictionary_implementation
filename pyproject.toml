@@ -9,6 +9,7 @@ description = "QAOS dictionary/1.0 DOCX-to-CSV conversion library"
 readme = "README.md"
 requires-python = ">=3.11,<3.14"
 dependencies = [
+  "qaos-common==0.2.2",
   "Pillow>=12.3,<13",
   "lxml>=5,<7",
   "python-docx>=1.1,<2",

@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import base64
+import io
+import random
 import tempfile
 import unittest
 from pathlib import Path
+
+from PIL import Image
 
 from app import create_app
 from qaos_dictionary import (
@@ -68,9 +72,14 @@ class QualityAssuranceTests(unittest.TestCase):
             input_path = root / "large-image.docx"
             output_path = root / "large-image.csv"
             input_path.write_bytes(b"QA fixture")
+            # Real WebP bytes: shared validation checks MIME signatures too.
+            image_buffer = io.BytesIO()
+            Image.frombytes("RGB", (256, 256), random.Random(0).randbytes(256 * 256 * 3)).save(
+                image_buffer, format="WEBP", lossless=True)
             image = "data:image/webp;base64," + base64.b64encode(
-                b"large-image-payload" * 10_000
+                image_buffer.getvalue()
             ).decode("ascii")
+            self.assertGreater(len(image), 131_072)
             columns = ("word", "definition", "image")
             content = rows_to_csv(
                 columns,

@@ -2,7 +2,9 @@
 
 from .core import (
     DEFAULT_IMAGE_QUALITY,
+    DICTIONARY_COLUMNS,
     DICTIONARY_SCHEMA_VERSION,
+    ProcessingLimits,
     MAX_CELL_BYTES,
     MAX_OUTPUT_BYTES,
     MAX_UPLOAD_BYTES,
@@ -25,6 +27,7 @@ from .core import (
 )
 
 __all__ = [
+    "DICTIONARY_COLUMNS", "ProcessingLimits",
     "DEFAULT_IMAGE_QUALITY", "DICTIONARY_SCHEMA_VERSION", "MAX_CELL_BYTES",
     "MAX_OUTPUT_BYTES", "MAX_UPLOAD_BYTES", "MISSING_IMAGE_VALUE",
     "WEBP_DATA_URI_PREFIX", "CancellationToken", "Checkpoint",

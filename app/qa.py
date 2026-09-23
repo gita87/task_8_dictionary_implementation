@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
-import base64
-import binascii
 import csv
 import hashlib
-import io
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Mapping, Sequence
+
+from qaos_common.csvio import CSVReader, DictionaryCSVProfile
+from qaos_common.errors import QAOSCommonError
+from qaos_common.limits import DEFAULT_LIMITS
+from qaos_common.rich_content import validate_image_data_uri
 
 from qaos_dictionary import ConversionResult, WEBP_DATA_URI_PREFIX
 
@@ -80,14 +82,10 @@ def _sha256_file(path: Path) -> str:
 
 
 def _parse_csv(content: bytes) -> tuple[list[str], list[dict[str, str]]]:
-    current_limit = csv.field_size_limit()
-    if len(content) > current_limit:
-        csv.field_size_limit(len(content))
-
-    text = content.decode("utf-8-sig")
-    reader = csv.DictReader(io.StringIO(text), delimiter="\t")
-    rows = [dict(row) for row in reader]
-    return list(reader.fieldnames or []), rows
+    # This input is generated CSV, so its read budget follows the output budget.
+    limits = replace(DEFAULT_LIMITS, max_upload_bytes=DEFAULT_LIMITS.max_output_bytes)
+    with CSVReader(content, profile=DictionaryCSVProfile(), limits=limits) as reader:
+        return list(reader.headers), [dict(row) for _, row in reader]
 
 
 def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int]:
@@ -107,8 +105,8 @@ def _image_metrics(rows: Sequence[Mapping[str, str]]) -> tuple[int, int]:
         if not payload:
             continue
         try:
-            base64.b64decode(payload, validate=True)
-        except (binascii.Error, ValueError):
+            validate_image_data_uri(value)
+        except QAOSCommonError:
             continue
 
         valid += 1
@@ -151,7 +149,7 @@ def build_qa_session(
     try:
         fieldnames, rows = _parse_csv(conversion.content)
         parse_error = None
-    except (UnicodeDecodeError, csv.Error) as error:
+    except (UnicodeDecodeError, csv.Error, QAOSCommonError) as error:
         fieldnames, rows = [], []
         parse_error = str(error)
 

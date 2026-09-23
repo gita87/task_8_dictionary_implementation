@@ -3,10 +3,8 @@
 from __future__ import annotations
 
 import base64
-import csv
 import io
 import re
-import threading
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -18,16 +16,25 @@ from docx.opc.exceptions import PackageNotFoundError
 from docx.table import Table, _Cell
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-DICTIONARY_SCHEMA_VERSION = "dictionary/1.0"
+from qaos_common import CancellationToken, ProcessingLimits
+from qaos_common.progress import ProgressEvent as CommonProgressEvent
+from qaos_common.limits import DEFAULT_LIMITS
+from qaos_common.errors import QAOSCommonError, redact_sensitive
+from qaos_common.csvio import DictionaryCSVProfile, DictionaryCSVWriter
+from qaos_common.schemas import (
+    DICTIONARY_COLUMNS, DICTIONARY_SCHEMA_VERSION, MISSING_DICTIONARY_IMAGE,
+    validate_dictionary_headers, validate_dictionary_row,
+)
+
 REQUIRED_HEADERS = ("word", "definition")
 OPTIONAL_HEADERS = ("image",)
 GENERATED_HEADERS = ("unique_id",)
-MISSING_IMAGE_VALUE = "NA"
+MISSING_IMAGE_VALUE = MISSING_DICTIONARY_IMAGE
 WEBP_DATA_URI_PREFIX = "data:image/webp;base64,"
 DEFAULT_IMAGE_QUALITY = 75
-MAX_UPLOAD_BYTES = 268_435_456
-MAX_CELL_BYTES = 67_108_864
-MAX_OUTPUT_BYTES = 536_870_912
+MAX_UPLOAD_BYTES = DEFAULT_LIMITS.max_upload_bytes
+MAX_CELL_BYTES = DEFAULT_LIMITS.max_cell_bytes
+MAX_OUTPUT_BYTES = DEFAULT_LIMITS.max_output_bytes
 MAX_UNCOMPRESSED_DOCX_BYTES = MAX_OUTPUT_BYTES
 MAX_DOCX_MEMBERS = 10_000
 
@@ -54,11 +61,11 @@ class Diagnostic:
     context: Mapping[str, object] = field(default_factory=dict)
 
     def as_dict(self) -> dict[str, object]:
-        return {"code": self.code, "message": self.message,
-                "severity": self.severity, "context": dict(self.context)}
+        return redact_sensitive({"code": self.code, "message": self.message,
+                "severity": self.severity, "context": dict(self.context)})
 
 
-class ConversionError(ValueError):
+class ConversionError(QAOSCommonError, ValueError):
     """Conversion failure carrying a stable structured diagnostic."""
 
     def __init__(self, diagnostic: Diagnostic | str, *,
@@ -66,8 +73,13 @@ class ConversionError(ValueError):
                  context: Mapping[str, object] | None = None) -> None:
         if isinstance(diagnostic, str):
             diagnostic = Diagnostic(code, diagnostic, context=context or {})
-        self.diagnostic = diagnostic
-        super().__init__(diagnostic.message)
+        super().__init__(diagnostic.message, code=diagnostic.code,
+                         details=diagnostic.context)
+        self.diagnostic = Diagnostic(self.code, self.message, diagnostic.severity,
+                                     self.details)
+
+    def __str__(self) -> str:
+        return self.message
 
     def as_dict(self) -> dict[str, object]:
         return self.diagnostic.as_dict()
@@ -80,6 +92,12 @@ class ProgressEvent:
     total: int | None
     message: str
 
+    def to_common(self) -> CommonProgressEvent:
+        stages = {"read": "reading", "validate": "validating", "extract": "parsing",
+                  "serialize": "writing", "complete": "completed"}
+        return CommonProgressEvent(stages[self.stage], self.completed, self.total,
+                                   self.message)
+
 
 @dataclass(frozen=True)
 class Checkpoint:
@@ -87,17 +105,6 @@ class Checkpoint:
     stage: str
     rows_processed: int
     total_rows: int | None
-
-
-class CancellationToken:
-    def __init__(self) -> None:
-        self._event = threading.Event()
-
-    def cancel(self) -> None:
-        self._event.set()
-
-    def is_cancelled(self) -> bool:
-        return self._event.is_set()
 
 
 class _EventLike(Protocol):
@@ -252,7 +259,7 @@ def extract_rows(document: DocumentType, image_quality: int = DEFAULT_IMAGE_QUAL
     has_image = "image" in headers
     if has_image:
         indexes["image"] = headers.index("image")
-    columns = tuple(GENERATED_HEADERS + REQUIRED_HEADERS + OPTIONAL_HEADERS)
+    columns = DICTIONARY_COLUMNS
     rows: list[dict[str, str]] = []
     source_rows = table.rows[1:]
     total = len(source_rows)
@@ -288,20 +295,43 @@ def extract_rows(document: DocumentType, image_quality: int = DEFAULT_IMAGE_QUAL
     return columns, rows
 
 
-def rows_to_csv(columns: tuple[str, ...], rows: list[dict[str, str]]) -> bytes:
-    output = io.StringIO(newline="")
-    writer = csv.DictWriter(output, fieldnames=columns, delimiter="\t",
-                            lineterminator="\r\n", quoting=csv.QUOTE_MINIMAL,
-                            quotechar='"', doublequote=True)
-    writer.writeheader()
-    if "unique_id" in columns:
-        rows = [{**row, "unique_id": f"'{row['unique_id']}"} for row in rows]
-    writer.writerows(rows)
-    content = output.getvalue().encode("utf-8-sig")
-    if len(content) > MAX_OUTPUT_BYTES:
-        raise _error("output_too_large", "The generated CSV exceeds the output size limit.",
-                     size_bytes=len(content), limit_bytes=MAX_OUTPUT_BYTES)
-    return content
+def rows_to_csv(columns: tuple[str, ...], rows: list[dict[str, str]], *,
+                cancellation: Cancellation | None = None) -> bytes:
+    """Serialize with the shared dictionary profile; retain legacy subset exports."""
+    output = io.BytesIO()
+    limits = ProcessingLimits(
+        max_upload_bytes=MAX_UPLOAD_BYTES, max_cell_bytes=MAX_CELL_BYTES,
+        max_output_bytes=MAX_OUTPUT_BYTES,
+        max_image_bytes=min(DEFAULT_LIMITS.max_image_bytes, MAX_CELL_BYTES))
+    canonical = set(DICTIONARY_COLUMNS).issubset(columns)
+    seen_ids: set[str] = set()
+    try:
+        if canonical:
+            validate_dictionary_headers(columns)
+        with DictionaryCSVWriter(output, columns=columns,
+                                 profile=DictionaryCSVProfile(line_ending="\r\n"),
+                                 limits=limits) as writer:
+            for row_number, row in enumerate(rows, start=2):
+                _check_cancelled(cancellation)
+                exported = dict(row)
+                if canonical:
+                    validate_dictionary_row(exported, row_number=row_number,
+                                            seen_ids=seen_ids)
+                    if not exported["definition"].strip():
+                        raise _error("required_cell_empty", "Dictionary definition is empty.",
+                                     row=row_number, columns=["definition"])
+                if "unique_id" in columns:
+                    exported["unique_id"] = f"'{row['unique_id']}"
+                writer.write_row(exported)
+    except ConversionError:
+        raise
+    except QAOSCommonError as error:
+        code = {"CSV_OUTPUT_TOO_LARGE": "output_too_large",
+                "CSV_CELL_TOO_LARGE": "cell_too_large"}.get(error.code, error.code)
+        converted = ConversionError(error.message, code=code, context=error.details)
+        converted.stage = error.stage
+        raise converted from error
+    return output.getvalue()
 
 
 def _output_filename(input_filename: str) -> str:
@@ -360,12 +390,21 @@ def convert_dictionary_docx(source: InputSource, input_filename: str | None = No
                             progress_callback: ProgressCallback | None = None,
                             cancellation: Cancellation | None = None,
                             checkpoint_callback: CheckpointCallback | None = None,
-                            checkpoint_interval: int = 100) -> ConversionResult:
+                            checkpoint_interval: int = 100,
+                            common_progress_callback: Callable[[CommonProgressEvent], None] | None = None,
+                            ) -> ConversionResult:
     """Convert a DOCX path, byte string, or binary stream to dictionary/1.0 CSV."""
     if not 1 <= image_quality <= 100:
         raise ValueError("image_quality must be between 1 and 100.")
     if checkpoint_interval < 1:
         raise ValueError("checkpoint_interval must be at least 1.")
+    legacy_callback = progress_callback
+    if common_progress_callback is not None:
+        def emit(event: ProgressEvent) -> None:
+            if legacy_callback is not None:
+                legacy_callback(event)
+            common_progress_callback(event.to_common())
+        progress_callback = emit
     _check_cancelled(cancellation)
     _progress(progress_callback, "read", 0, None, "Reading input")
     payload, filename = _read_source(source, input_filename)
@@ -387,7 +426,8 @@ def convert_dictionary_docx(source: InputSource, input_filename: str | None = No
         checkpoint_interval=checkpoint_interval)
     _check_cancelled(cancellation)
     _progress(progress_callback, "serialize", 0, 1, "Serializing CSV")
-    content = rows_to_csv(columns, rows)
+    content = rows_to_csv(columns, rows, cancellation=cancellation)
+    _check_cancelled(cancellation)
     _progress(progress_callback, "complete", 1, 1, "Conversion complete")
     return ConversionResult(content, _output_filename(filename), len(rows), columns)
 
